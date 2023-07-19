@@ -13,7 +13,7 @@ OpenWindow(u32 *BackingBuffer)
 		X11Display, X11DefaultRootWindow,
 		0, 0, WINDOW_WIDTH, WINDOW_HEIGHT,
 		WINDOW_BORDER_WIDTH, ForegroundColor, BackgroundColor);
-	long EventMask = KeyPressMask | ButtonPressMask | ButtonReleaseMask | Button1MotionMask;
+	long EventMask = KeyPressMask | ButtonPressMask | ButtonReleaseMask | ButtonMotionMask;
 	XSelectInput(X11Display, X11Window, EventMask);
 
 	// NOTE(ariel) Fix window size.
