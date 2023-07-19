@@ -50,6 +50,9 @@ OpenWindow(u32 *BackingBuffer)
 static void
 CloseWindow(void)
 {
+	// NOTE(ariel) This also attempts to free the static buffer I gave it. |:^/
+	// XDestroyImage(X11Image);
+	XFreeGC(X11Display, X11GraphicsContext);
 	XDestroyWindow(X11Display, X11Window);
 	XCloseDisplay(X11Display);
 }
