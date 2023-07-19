@@ -16,7 +16,7 @@ static GC X11GraphicsContext;
 static XImage *X11Image;
 static Atom X11DeleteWindowEvent;
 
-static void OpenWindow(u32 *BackingBuffer);
+static void OpenWindow(void);
 static void CloseWindow(void);
 
 #endif

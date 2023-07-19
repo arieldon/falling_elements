@@ -5,7 +5,7 @@ ClearBuffer(void)
 	{
 		for (s32 X = 0; X < WINDOW_WIDTH; X += 1)
 		{
-			Buffer[WINDOW_WIDTH*Y + X] = 0xff00ff;
+			Framebuffer[WINDOW_WIDTH*Y + X] = 0xff00ff;
 		}
 	}
 }

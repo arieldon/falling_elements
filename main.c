@@ -67,7 +67,7 @@ HandleInput(void)
 int
 main(void)
 {
-	OpenWindow(Buffer);
+	OpenWindow();
 
 	f64 CurrentTimestamp = 0;
 	f64 PreviousTimestamp = 0;
@@ -80,12 +80,29 @@ main(void)
 
 		HandleInput();
 
+		u32 OffSandBufferIndex = SandBufferIndex ^ 1;
+		for (s32 Y = 0; Y < WINDOW_HEIGHT - 1; Y += 1)
+		{
+			for (s32 X = 0; X < WINDOW_WIDTH; X += 1)
+			{
+				if (SandBuffers[OffSandBufferIndex][Y*WINDOW_WIDTH + X] == 0xffff00)
+				{
+					SandBuffers[SandBufferIndex][(Y+1)*WINDOW_WIDTH + X] = 0xffff00;
+				}
+			}
+		}
+
+		memset(SandBuffers[OffSandBufferIndex], 0, sizeof(u32) * WINDOW_WIDTH * WINDOW_HEIGHT);
+
 		for (s32 Index = 0; Index < LocationsCount; Index += 1)
 		{
-			Buffer[Locations[Index].Y*WINDOW_WIDTH + Locations[Index].X] = 0x0000ff;
+			SandBuffers[SandBufferIndex][Locations[Index].Y*WINDOW_WIDTH + Locations[Index].X] = 0xffff00;
 		}
+
+		memcpy(Framebuffer, SandBuffers[SandBufferIndex], sizeof(u32) * WINDOW_WIDTH * WINDOW_HEIGHT);
 		PresentBuffer();
 
+		SandBufferIndex ^= 1;
 		LocationsCount = 0;
 		PreviousTimestamp = CurrentTime;
 	}

@@ -1,5 +1,5 @@
 static void
-OpenWindow(u32 *BackingBuffer)
+OpenWindow(void)
 {
 	X11Display = XOpenDisplay(0);
 
@@ -36,7 +36,7 @@ OpenWindow(u32 *BackingBuffer)
 	Visual *X11Visual = XDefaultVisual(X11Display, X11ScreenNumber);
 	X11Image = XCreateImage(X11Display, X11Visual,
 		Depth, ZPixmap, 0,
-		(char *)BackingBuffer, WINDOW_WIDTH, WINDOW_HEIGHT,
+		(char *)Framebuffer, WINDOW_WIDTH, WINDOW_HEIGHT,
 		32, 0);
 
 	// NOTE(ariel) Register event to close window properly when user clicks "x".
