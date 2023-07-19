@@ -3,6 +3,8 @@
 
 enum { FRAMES_PER_SECOND = 60 };
 
+typedef struct { s32 X, Y; } Vector2s;
+
 static u32 Buffer[WINDOW_WIDTH * WINDOW_HEIGHT];
 static b32 Running = true;
 

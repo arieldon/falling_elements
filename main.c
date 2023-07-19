@@ -10,6 +10,12 @@
 #include "window.c"
 #include "renderer.c"
 
+enum { MAXIMUM_COORDINATES_COUNT = 1<<4 };
+static s32 LocationsCount;
+static Vector2s Locations[MAXIMUM_COORDINATES_COUNT];
+
+static b32 Sanding;
+
 static void
 HandleInput(void)
 {
@@ -31,17 +37,17 @@ HandleInput(void)
 			case ButtonPress:
 			case ButtonRelease:
 			{
-				XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
-				if (Event->button == Button1)
-				{
-					printf("(%d) %d, %d\n", Event->button, Event->x, Event->y);
-				}
+				// XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
+				Sanding ^= Sanding;
 				break;
 			}
 			case MotionNotify:
 			{
 				XPointerMovedEvent *Event = (XPointerMovedEvent *)&GeneralEvent;
-				printf("%d, %d\n", Event->x, Event->y);
+				Vector2s SandGrainLocation = {0};
+				SandGrainLocation.X = Event->x;
+				SandGrainLocation.Y = Event->y;
+				Locations[LocationsCount++] = SandGrainLocation;
 				break;
 			}
 			case ClientMessage:
@@ -73,9 +79,14 @@ main(void)
 		DeltaTime = CurrentTimestamp - PreviousTimestamp;
 
 		HandleInput();
-		ClearBuffer();
+
+		for (s32 Index = 0; Index < LocationsCount; Index += 1)
+		{
+			Buffer[Locations[Index].Y*WINDOW_WIDTH + Locations[Index].X] = 0x0000ff;
+		}
 		PresentBuffer();
 
+		LocationsCount = 0;
 		PreviousTimestamp = CurrentTime;
 	}
 
