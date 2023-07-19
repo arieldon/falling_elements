@@ -13,6 +13,7 @@
 enum { MAXIMUM_COORDINATES_COUNT = 1<<4 };
 static s32 LocationsCount;
 static Vector2s Locations[MAXIMUM_COORDINATES_COUNT];
+static Vector2s PreviousLocation;
 
 static b32 Sanding;
 
@@ -35,10 +36,16 @@ HandleInput(void)
 				break;
 			}
 			case ButtonPress:
+			{
+				XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
+				Sanding = 1;
+				PreviousLocation.X = Event->x;
+				PreviousLocation.Y = Event->y;
+				break;
+			}
 			case ButtonRelease:
 			{
-				// XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
-				Sanding ^= Sanding;
+				Sanding = 0;
 				break;
 			}
 			case MotionNotify:
@@ -48,6 +55,7 @@ HandleInput(void)
 				SandGrainLocation.X = Event->x;
 				SandGrainLocation.Y = Event->y;
 				Locations[LocationsCount++] = SandGrainLocation;
+				PreviousLocation = SandGrainLocation;
 				break;
 			}
 			case ClientMessage:
@@ -80,6 +88,7 @@ main(void)
 
 		HandleInput();
 
+		// NOTE(ariel) Transition previous state.
 		u32 OffSandBufferIndex = SandBufferIndex ^ 1;
 		for (s32 Y = 0; Y < WINDOW_HEIGHT - 1; Y += 1)
 		{
@@ -94,9 +103,14 @@ main(void)
 
 		memset(SandBuffers[OffSandBufferIndex], 0, sizeof(u32) * WINDOW_WIDTH * WINDOW_HEIGHT);
 
-		for (s32 Index = 0; Index < LocationsCount; Index += 1)
+		// NOTE(ariel) Add new states from input.
+		if (Sanding)
 		{
-			SandBuffers[SandBufferIndex][Locations[Index].Y*WINDOW_WIDTH + Locations[Index].X] = 0xffff00;
+			for (s32 Index = 0; Index < LocationsCount - 1; Index += 1)
+			{
+				SandBuffers[SandBufferIndex][Locations[Index].Y*WINDOW_WIDTH + Locations[Index].X] = 0xffff00;
+			}
+			SandBuffers[SandBufferIndex][PreviousLocation.Y*WINDOW_WIDTH + PreviousLocation.X] = 0xffff00;
 		}
 
 		memcpy(Framebuffer, SandBuffers[SandBufferIndex], sizeof(u32) * WINDOW_WIDTH * WINDOW_HEIGHT);
