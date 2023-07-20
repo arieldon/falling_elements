@@ -10,6 +10,8 @@
 #include "window.c"
 #include "renderer.c"
 
+enum { YELLOW = 0xffff00 };
+
 enum { MAXIMUM_COORDINATES_COUNT = 1<<4 };
 static s32 LocationsCount;
 static Vector2s Locations[MAXIMUM_COORDINATES_COUNT];
@@ -107,9 +109,9 @@ main(void)
 		{
 			for (s32 X = 0; X < WINDOW_WIDTH; X += 1)
 			{
-				if (SandBuffers[OffSandBufferIndex][Y*WINDOW_WIDTH + X] == 0xffff00)
+				if (SandBuffers[OffSandBufferIndex][Y*WINDOW_WIDTH + X] == YELLOW)
 				{
-					SandBuffers[SandBufferIndex][(Y+1)*WINDOW_WIDTH + X] = 0xffff00;
+					SandBuffers[SandBufferIndex][(Y+1)*WINDOW_WIDTH + X] = YELLOW;
 				}
 			}
 		}
@@ -121,9 +123,9 @@ main(void)
 		{
 			for (s32 Index = 0; Index < LocationsCount - 1; Index += 1)
 			{
-				SandBuffers[SandBufferIndex][Locations[Index].Y*WINDOW_WIDTH + Locations[Index].X] = 0xffff00;
+				SandBuffers[SandBufferIndex][Locations[Index].Y*WINDOW_WIDTH + Locations[Index].X] = YELLOW;
 			}
-			SandBuffers[SandBufferIndex][PreviousLocation.Y*WINDOW_WIDTH + PreviousLocation.X] = 0xffff00;
+			SandBuffers[SandBufferIndex][PreviousLocation.Y*WINDOW_WIDTH + PreviousLocation.X] = YELLOW;
 		}
 
 		memcpy(Framebuffer, SandBuffers[SandBufferIndex], sizeof(u32) * WINDOW_WIDTH * WINDOW_HEIGHT);
