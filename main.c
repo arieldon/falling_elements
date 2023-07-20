@@ -17,6 +17,16 @@ static Vector2s PreviousLocation;
 
 static b32 Sanding;
 
+static inline b32
+IsInWindowSpace(Vector2s Location)
+{
+	b32 XMin = Location.X >= 0;
+	b32 YMin = Location.Y >= 0;
+	b32 XMax = Location.X < WINDOW_WIDTH;
+	b32 YMax = Location.Y < WINDOW_HEIGHT;
+	return XMin & YMin & XMax & YMax;
+}
+
 static void
 HandleInput(void)
 {
@@ -54,8 +64,11 @@ HandleInput(void)
 				Vector2s SandGrainLocation = {0};
 				SandGrainLocation.X = Event->x;
 				SandGrainLocation.Y = Event->y;
-				Locations[LocationsCount++] = SandGrainLocation;
-				PreviousLocation = SandGrainLocation;
+				if (IsInWindowSpace(SandGrainLocation))
+				{
+					Locations[LocationsCount++] = SandGrainLocation;
+					PreviousLocation = SandGrainLocation;
+				}
 				break;
 			}
 			case ClientMessage:
