@@ -104,19 +104,36 @@ main(void)
 		HandleInput();
 
 		// NOTE(ariel) Transition previous state.
-		u32 OffSandBufferIndex = SandBufferIndex ^ 1;
-		for (s32 Y = 0; Y < WINDOW_HEIGHT - 1; Y += 1)
 		{
+			u32 OffSandBufferIndex = SandBufferIndex ^ 1;
+
 			for (s32 X = 0; X < WINDOW_WIDTH; X += 1)
 			{
-				if (SandBuffers[OffSandBufferIndex][Y*WINDOW_WIDTH + X] == YELLOW)
+				if (SandBuffers[OffSandBufferIndex][(WINDOW_HEIGHT-1)*WINDOW_WIDTH + X] == YELLOW)
 				{
-					SandBuffers[SandBufferIndex][(Y+1)*WINDOW_WIDTH + X] = YELLOW;
+					SandBuffers[SandBufferIndex][(WINDOW_HEIGHT-1)*WINDOW_WIDTH + X] = YELLOW;
 				}
 			}
-		}
 
-		memset(SandBuffers[OffSandBufferIndex], 0, sizeof(u32) * WINDOW_WIDTH * WINDOW_HEIGHT);
+			for (s32 Y = WINDOW_HEIGHT - 2; Y >= 1; Y -= 1)
+			{
+				for (s32 X = 0; X < WINDOW_WIDTH; X += 1)
+				{
+					u32 CurrentCell = SandBuffers[OffSandBufferIndex][Y*WINDOW_WIDTH + X];
+					u32 BottomNeighbor = SandBuffers[OffSandBufferIndex][(Y+1)*WINDOW_WIDTH + X];
+					if (BottomNeighbor && CurrentCell)
+					{
+						SandBuffers[SandBufferIndex][Y*WINDOW_WIDTH + X] = YELLOW;
+					}
+					else if (CurrentCell)
+					{
+						SandBuffers[SandBufferIndex][(Y+1)*WINDOW_WIDTH + X] = YELLOW;
+					}
+				}
+			}
+
+			memset(SandBuffers[OffSandBufferIndex], 0, sizeof(u32) * WINDOW_WIDTH * WINDOW_HEIGHT);
+		}
 
 		// NOTE(ariel) Add new states from input.
 		if (Sanding)
