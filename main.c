@@ -115,14 +115,13 @@ main(void)
 {
 	OpenWindow();
 
-	f64 CurrentTimestamp = 0;
-	f64 PreviousTimestamp = 0;
-	f64 DeltaTime = 0;
+	u64 CurrentTimestamp = 0;
+	u64 PreviousTimestamp = 0;
+	u64 DeltaTime = 0;
 
 	while (Running)
 	{
 		CurrentTimestamp = GetTime();
-		DeltaTime = CurrentTimestamp - PreviousTimestamp;
 
 		HandleInput();
 
@@ -196,7 +195,10 @@ main(void)
 
 		LocationsCount = 0;
 		ActiveSandBufferIndex ^= 1;
-		PreviousTimestamp = CurrentTime;
+
+		DeltaTime = CurrentTimestamp - PreviousTimestamp;
+		PreviousTimestamp = CurrentTimestamp;
+		SleepForNanoseconds(DeltaTime);
 	}
 
 	CloseWindow();

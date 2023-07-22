@@ -22,13 +22,28 @@ PresentBuffer(void)
 		WINDOW_WIDTH, WINDOW_HEIGHT);
 }
 
-static inline f64
+static inline u64
 GetTime(void)
 {
-	struct timespec Time = {0};
-	clock_gettime(CLOCK_MONOTONIC, &Time);
-	f64 Nanoseconds = Time.tv_nsec * 1e-9f;
-	f64 Seconds = Time.tv_sec + Nanoseconds;
-	f64 Milliseconds = Seconds * 1e-3f;
-	return Milliseconds;
+	u64 Nanoseconds = 0;
+	struct timespec Now = {0};
+	clock_gettime(CLOCK_MONOTONIC, &Now);
+	Nanoseconds += Now.tv_sec;
+	Nanoseconds *= NANOSECONDS_PER_SECOND;
+	Nanoseconds += Now.tv_nsec;
+	return Nanoseconds;
+}
+
+static inline void
+SleepForNanoseconds(u64 DeltaTimeNS)
+{
+	static const u64 TARGET_FRAME_TIME_NS = NANOSECONDS_PER_SECOND / TARGET_FRAMES_PER_SECOND;
+	s64 SleepTimeNS = TARGET_FRAME_TIME_NS - DeltaTimeNS;
+	if (SleepTimeNS > 0)
+	{
+		struct timespec Time = {0};
+		Time.tv_sec = SleepTimeNS / NANOSECONDS_PER_SECOND;
+		Time.tv_nsec = SleepTimeNS % NANOSECONDS_PER_SECOND;
+		nanosleep(&Time, 0);
+	}
 }

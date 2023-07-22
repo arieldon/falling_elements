@@ -1,8 +1,9 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-enum { FRAMES_PER_SECOND = 60 };
 enum { YELLOW = 0xffff00 };
+enum { TARGET_FRAMES_PER_SECOND = 60 };
+static const u64 NANOSECONDS_PER_SECOND = 1000000000l;
 
 typedef struct { s32 X, Y; } Vector2s;
 
@@ -19,6 +20,7 @@ static b32 Running = true;
 
 static void ClearBuffer(void);
 static void PresentBuffer(void);
-static inline f64 GetTime(void);
+static inline u64 GetTime(void);
+static inline void SleepForNanoseconds(u64 DeltaTimeNS);
 
 #endif
