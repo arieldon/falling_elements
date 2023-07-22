@@ -11,9 +11,9 @@
 #include "renderer.c"
 
 
-enum { MAXIMUM_COORDINATES_COUNT = 1<<4 };
+enum { MAXIMUM_LOCATIONS_COUNT = 1<<4 };
 static s32 LocationsCount;
-static Vector2s Locations[MAXIMUM_COORDINATES_COUNT];
+static Vector2s Locations[MAXIMUM_LOCATIONS_COUNT];
 static Vector2s PreviousLocation;
 
 static b32 Sanding;
@@ -67,6 +67,7 @@ HandleInput(void)
 				SandGrainLocation.Y = Event->y;
 				if (IsInWindowSpace(SandGrainLocation))
 				{
+					Assert(LocationsCount < MAXIMUM_LOCATIONS_COUNT);
 					Locations[LocationsCount++] = SandGrainLocation;
 					PreviousLocation = SandGrainLocation;
 				}
