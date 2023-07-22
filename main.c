@@ -140,17 +140,30 @@ main(void)
 			// NOTE(ariel) Model gravity.
 			for (s32 Y = 0; Y < Y_CELL_COUNT - 1; Y += 1)
 			{
-				for (s32 X = 0; X < X_CELL_COUNT; X += 1)
+				for (s32 X = 1; X < X_CELL_COUNT - 1; X += 1)
 				{
 					u32 PreviousCellState = SandBuffers[InactiveSandBufferIndex][Y*X_CELL_COUNT + X];
-					u32 PreviousBottomNeighborState = SandBuffers[InactiveSandBufferIndex][(Y+1)*X_CELL_COUNT + X];
-					if (PreviousCellState && PreviousBottomNeighborState)
+					u32 PreviousBottomNeighborState = SandBuffers[InactiveSandBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)];
+					u32 PreviousBottomLeftNeighborState = SandBuffers[InactiveSandBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)];
+					u32 PreviousBottomRightNeighborState = SandBuffers[InactiveSandBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)];
+					if (PreviousCellState)
 					{
-						SandBuffers[ActiveSandBufferIndex][(Y+0)*X_CELL_COUNT + X] = YELLOW;
-					}
-					else if (PreviousCellState)
-					{
-						SandBuffers[ActiveSandBufferIndex][(Y+1)*X_CELL_COUNT + X] = YELLOW;
+						if (!PreviousBottomNeighborState)
+						{
+							SandBuffers[ActiveSandBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)] = YELLOW;
+						}
+						else if (!PreviousBottomLeftNeighborState)
+						{
+							SandBuffers[ActiveSandBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)] = YELLOW;
+						}
+						else if (!PreviousBottomRightNeighborState)
+						{
+							SandBuffers[ActiveSandBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)] = YELLOW;
+						}
+						else
+						{
+							SandBuffers[ActiveSandBufferIndex][(Y+0)*X_CELL_COUNT + (X+0)] = YELLOW;
+						}
 					}
 				}
 			}
