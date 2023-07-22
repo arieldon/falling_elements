@@ -6,8 +6,8 @@ OpenWindow(void)
 	Window X11DefaultRootWindow = DefaultRootWindow(X11Display);
 	int X11ScreenNumber = DefaultScreen(X11Display);
 
-	int ForegroundColor = WhitePixel(X11Display, X11ScreenNumber);
-	int BackgroundColor = BlackPixel(X11Display, X11ScreenNumber);
+	long ForegroundColor = WhitePixel(X11Display, X11ScreenNumber);
+	long BackgroundColor = BlackPixel(X11Display, X11ScreenNumber);
 
 	X11Window = XCreateSimpleWindow(
 		X11Display, X11DefaultRootWindow,
