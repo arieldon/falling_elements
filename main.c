@@ -10,7 +10,6 @@
 #include "window.c"
 #include "renderer.c"
 
-enum { YELLOW = 0xffff00 };
 
 enum { MAXIMUM_COORDINATES_COUNT = 1<<4 };
 static s32 LocationsCount;
@@ -87,6 +86,30 @@ HandleInput(void)
 	}
 }
 
+static void
+MapCellToPixels(s32 CellY, s32 CellX)
+{
+	s32 PixelY = CellY * 5;
+	s32 PixelX = CellX * 5;
+
+	Assert(PixelY >= 0);
+	Assert(PixelX >= 0);
+	Assert(PixelY < WINDOW_HEIGHT);
+	Assert(PixelX < WINDOW_WIDTH);
+
+	s32 StartY = Max(PixelY - 2, 0);
+	s32 StartX = Max(PixelX - 2, 0);
+	s32 EndY = Min(PixelY + 2, WINDOW_HEIGHT);
+	s32 EndX = Min(PixelX + 2, WINDOW_WIDTH);
+	for (s32 Y = StartY; Y < EndY; Y += 1)
+	{
+		for (s32 X = StartX; X < EndX; X += 1)
+		{
+			Framebuffer[Y*WINDOW_WIDTH + X] = YELLOW;
+		}
+	}
+}
+
 int
 main(void)
 {
@@ -103,53 +126,76 @@ main(void)
 
 		HandleInput();
 
+		s32 InactiveSandBufferIndex = ActiveSandBufferIndex ^ 1;
+
 		// NOTE(ariel) Transition previous state.
 		{
-			u32 OffSandBufferIndex = SandBufferIndex ^ 1;
-
-			for (s32 X = 0; X < WINDOW_WIDTH; X += 1)
+			// NOTE(ariel) Persist state of bottom row of cells across frames.
+			for (s32 X = 0; X < X_CELL_COUNT; X += 1)
 			{
-				if (SandBuffers[OffSandBufferIndex][(WINDOW_HEIGHT-1)*WINDOW_WIDTH + X] == YELLOW)
-				{
-					SandBuffers[SandBufferIndex][(WINDOW_HEIGHT-1)*WINDOW_WIDTH + X] = YELLOW;
-				}
+				u32 PreviousCellState = SandBuffers[InactiveSandBufferIndex][(Y_CELL_COUNT-1)*X_CELL_COUNT + X];
+				SandBuffers[ActiveSandBufferIndex][(Y_CELL_COUNT-1)*X_CELL_COUNT + X] = PreviousCellState;
 			}
 
-			for (s32 Y = WINDOW_HEIGHT - 2; Y >= 1; Y -= 1)
+			// NOTE(ariel) Model gravity.
+			for (s32 Y = 0; Y < Y_CELL_COUNT - 1; Y += 1)
 			{
-				for (s32 X = 0; X < WINDOW_WIDTH; X += 1)
+				for (s32 X = 0; X < X_CELL_COUNT; X += 1)
 				{
-					u32 CurrentCell = SandBuffers[OffSandBufferIndex][Y*WINDOW_WIDTH + X];
-					u32 BottomNeighbor = SandBuffers[OffSandBufferIndex][(Y+1)*WINDOW_WIDTH + X];
-					if (BottomNeighbor && CurrentCell)
+					u32 PreviousCellState = SandBuffers[InactiveSandBufferIndex][Y*X_CELL_COUNT + X];
+					u32 PreviousBottomNeighborState = SandBuffers[InactiveSandBufferIndex][(Y+1)*X_CELL_COUNT + X];
+					if (PreviousCellState && PreviousBottomNeighborState)
 					{
-						SandBuffers[SandBufferIndex][Y*WINDOW_WIDTH + X] = YELLOW;
+						SandBuffers[ActiveSandBufferIndex][(Y+0)*X_CELL_COUNT + X] = YELLOW;
 					}
-					else if (CurrentCell)
+					else if (PreviousCellState)
 					{
-						SandBuffers[SandBufferIndex][(Y+1)*WINDOW_WIDTH + X] = YELLOW;
+						SandBuffers[ActiveSandBufferIndex][(Y+1)*X_CELL_COUNT + X] = YELLOW;
 					}
 				}
 			}
-
-			memset(SandBuffers[OffSandBufferIndex], 0, sizeof(u32) * WINDOW_WIDTH * WINDOW_HEIGHT);
 		}
 
-		// NOTE(ariel) Add new states from input.
+		// NOTE(ariel) Map new input in window coordinates to cell space.
 		if (Sanding)
 		{
 			for (s32 Index = 0; Index < LocationsCount - 1; Index += 1)
 			{
-				SandBuffers[SandBufferIndex][Locations[Index].Y*WINDOW_WIDTH + Locations[Index].X] = YELLOW;
+				Vector2s Location = Locations[Index];
+
+				s32 CellY = Location.Y / 5;
+				s32 CellX = Location.X / 5;
+
+				Assert(CellY >= 0);
+				Assert(CellX >= 0);
+				Assert(CellY < Y_CELL_COUNT);
+				Assert(CellX < X_CELL_COUNT);
+
+				SandBuffers[ActiveSandBufferIndex][CellY*X_CELL_COUNT + CellX] = YELLOW;
 			}
-			SandBuffers[SandBufferIndex][PreviousLocation.Y*WINDOW_WIDTH + PreviousLocation.X] = YELLOW;
+
+			s32 PreviousLocationY = PreviousLocation.Y / 5;
+			s32 PreviousLocationX = PreviousLocation.X / 5;
+			SandBuffers[ActiveSandBufferIndex][PreviousLocationY*X_CELL_COUNT + PreviousLocationX] = YELLOW;
 		}
 
-		memcpy(Framebuffer, SandBuffers[SandBufferIndex], sizeof(u32) * WINDOW_WIDTH * WINDOW_HEIGHT);
-		PresentBuffer();
+		for (s32 Y = 0; Y < Y_CELL_COUNT; Y += 1)
+		{
+			for (s32 X = 0; X < X_CELL_COUNT; X += 1)
+			{
+				if (SandBuffers[ActiveSandBufferIndex][Y*X_CELL_COUNT + X])
+				{
+					MapCellToPixels(Y, X);
+				}
+			}
+		}
 
-		SandBufferIndex ^= 1;
+		PresentBuffer();
+		memset(Framebuffer, 0xffff00, WINDOW_HEIGHT*WINDOW_WIDTH*sizeof(u32));
+		memset(SandBuffers[InactiveSandBufferIndex], 0, Y_CELL_COUNT*X_CELL_COUNT*sizeof(u32));
+
 		LocationsCount = 0;
+		ActiveSandBufferIndex ^= 1;
 		PreviousTimestamp = CurrentTime;
 	}
 
