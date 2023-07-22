@@ -1,10 +1,8 @@
 #ifndef BASE_H
 #define BASE_H
 
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 typedef  uint8_t    u8;
@@ -21,7 +19,12 @@ typedef      s32   b32;
 typedef    float   f32;
 typedef   double   f64;
 
-#define ArrayCount(Array) (sizeof(Array) / sizeof((Array)[0]))
+enum
+{
+	false = 0,
+	true = 1,
+};
+
 #define Breakpoint() do { __asm__("int $3"); __asm__("nop"); } while (0)
 #define Message(x) fprintf(stderr, "%s:%d: %s: assertion `%s` failed\n", __FILE__, __LINE__, __func__, #x)
 #define Assert(x) do { if (!(x)) { Message(x); Breakpoint(); } } while (0)
@@ -33,6 +36,8 @@ typedef   double   f64;
 
 #define Swap(A, B) do { __typeof__(A) Temporary = A; A = B; B = Temporary; } while (0)
 #define SwapIfLess(A, B) do { if (A < B) Swap(A, B); } while (0)
+
+#define ArrayCount(Array) (sizeof(Array) / sizeof((Array)[0]))
 
 #define KB(n) (n << 10)
 #define MB(n) (n << 20)
