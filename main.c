@@ -189,7 +189,10 @@ main(void)
 
 			s32 PreviousLocationY = PreviousLocation.Y / 5;
 			s32 PreviousLocationX = PreviousLocation.X / 5;
-			SandBuffers[ActiveSandBufferIndex][PreviousLocationY*X_CELL_COUNT + PreviousLocationX] = YELLOW;
+			if (!SandBuffers[InactiveSandBufferIndex][PreviousLocationY*X_CELL_COUNT + PreviousLocationX])
+			{
+				SandBuffers[ActiveSandBufferIndex][PreviousLocationY*X_CELL_COUNT + PreviousLocationX] = YELLOW;
+			}
 		}
 
 		for (s32 Y = 0; Y < Y_CELL_COUNT; Y += 1)
