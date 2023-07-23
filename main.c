@@ -10,6 +10,11 @@
 #include "window.c"
 #include "renderer.c"
 
+u32 CellTypeColorTable[CELL_TYPE_COUNT] =
+{
+	[BLANK] = 0x000000,
+	[SAND] = 0xffff00,
+};
 
 enum { MAXIMUM_LOCATIONS_COUNT = 1<<4 };
 static s32 LocationsCount;
@@ -90,6 +95,7 @@ HandleInput(void)
 static void
 MapCellToPixels(s32 CellY, s32 CellX)
 {
+	u32 Color = CellTypeColorTable[CellBuffers[ActiveCellBufferIndex][CellY*X_CELL_COUNT + CellX]];
 	s32 PixelY = CellY * 5;
 	s32 PixelX = CellX * 5;
 
@@ -106,7 +112,7 @@ MapCellToPixels(s32 CellY, s32 CellX)
 	{
 		for (s32 X = StartX; X < EndX; X += 1)
 		{
-			Framebuffer[Y*WINDOW_WIDTH + X] = YELLOW;
+			Framebuffer[Y*WINDOW_WIDTH + X] = Color;
 		}
 	}
 }
@@ -126,15 +132,15 @@ main(void)
 
 		HandleInput();
 
-		s32 InactiveSandBufferIndex = ActiveSandBufferIndex ^ 1;
+		s32 InactiveCellBufferIndex = ActiveCellBufferIndex ^ 1;
 
 		// NOTE(ariel) Transition previous state.
 		{
 			// NOTE(ariel) Persist state of bottom row of cells across frames.
 			for (s32 X = 0; X < X_CELL_COUNT; X += 1)
 			{
-				u32 PreviousCellState = SandBuffers[InactiveSandBufferIndex][(Y_CELL_COUNT-1)*X_CELL_COUNT + X];
-				SandBuffers[ActiveSandBufferIndex][(Y_CELL_COUNT-1)*X_CELL_COUNT + X] = PreviousCellState;
+				cell_type PreviousCellState = CellBuffers[InactiveCellBufferIndex][(Y_CELL_COUNT-1)*X_CELL_COUNT + X];
+				CellBuffers[ActiveCellBufferIndex][(Y_CELL_COUNT-1)*X_CELL_COUNT + X] = PreviousCellState;
 			}
 
 			// NOTE(ariel) Model gravity.
@@ -142,27 +148,27 @@ main(void)
 			{
 				for (s32 X = 1; X < X_CELL_COUNT - 1; X += 1)
 				{
-					u32 PreviousCellState = SandBuffers[InactiveSandBufferIndex][Y*X_CELL_COUNT + X];
-					u32 PreviousBottomNeighborState = SandBuffers[InactiveSandBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)];
-					u32 PreviousBottomLeftNeighborState = SandBuffers[InactiveSandBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)];
-					u32 PreviousBottomRightNeighborState = SandBuffers[InactiveSandBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)];
+					cell_type PreviousCellState = CellBuffers[InactiveCellBufferIndex][Y*X_CELL_COUNT + X];
+					cell_type PreviousBottomNeighborState = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)];
+					cell_type PreviousBottomLeftNeighborState = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)];
+					cell_type PreviousBottomRightNeighborState = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)];
 					if (PreviousCellState)
 					{
 						if (!PreviousBottomNeighborState)
 						{
-							SandBuffers[ActiveSandBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)] = YELLOW;
+							CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)] = SAND;
 						}
 						else if (!PreviousBottomLeftNeighborState)
 						{
-							SandBuffers[ActiveSandBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)] = YELLOW;
+							CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)] = SAND;
 						}
 						else if (!PreviousBottomRightNeighborState)
 						{
-							SandBuffers[ActiveSandBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)] = YELLOW;
+							CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)] = SAND;
 						}
 						else
 						{
-							SandBuffers[ActiveSandBufferIndex][(Y+0)*X_CELL_COUNT + (X+0)] = YELLOW;
+							CellBuffers[ActiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X+0)] = SAND;
 						}
 					}
 				}
@@ -184,14 +190,14 @@ main(void)
 				Assert(CellY < Y_CELL_COUNT);
 				Assert(CellX < X_CELL_COUNT);
 
-				SandBuffers[ActiveSandBufferIndex][CellY*X_CELL_COUNT + CellX] = YELLOW;
+				CellBuffers[ActiveCellBufferIndex][CellY*X_CELL_COUNT + CellX] = SAND;
 			}
 
 			s32 PreviousLocationY = PreviousLocation.Y / 5;
 			s32 PreviousLocationX = PreviousLocation.X / 5;
-			if (!SandBuffers[InactiveSandBufferIndex][PreviousLocationY*X_CELL_COUNT + PreviousLocationX])
+			if (!CellBuffers[InactiveCellBufferIndex][PreviousLocationY*X_CELL_COUNT + PreviousLocationX])
 			{
-				SandBuffers[ActiveSandBufferIndex][PreviousLocationY*X_CELL_COUNT + PreviousLocationX] = YELLOW;
+				CellBuffers[ActiveCellBufferIndex][PreviousLocationY*X_CELL_COUNT + PreviousLocationX] = SAND;
 			}
 		}
 
@@ -199,7 +205,7 @@ main(void)
 		{
 			for (s32 X = 0; X < X_CELL_COUNT; X += 1)
 			{
-				if (SandBuffers[ActiveSandBufferIndex][Y*X_CELL_COUNT + X])
+				if (CellBuffers[ActiveCellBufferIndex][Y*X_CELL_COUNT + X])
 				{
 					MapCellToPixels(Y, X);
 				}
@@ -207,11 +213,11 @@ main(void)
 		}
 
 		PresentBuffer();
-		memset(Framebuffer, 0xffff00, WINDOW_HEIGHT*WINDOW_WIDTH*sizeof(u32));
-		memset(SandBuffers[InactiveSandBufferIndex], 0, Y_CELL_COUNT*X_CELL_COUNT*sizeof(u32));
+		memset(Framebuffer, 0, WINDOW_HEIGHT*WINDOW_WIDTH*sizeof(u32));
+		memset(CellBuffers[InactiveCellBufferIndex], 0, Y_CELL_COUNT*X_CELL_COUNT*sizeof(cell_type));
 
 		LocationsCount = 0;
-		ActiveSandBufferIndex ^= 1;
+		ActiveCellBufferIndex ^= 1;
 
 		DeltaTime = CurrentTimestamp - PreviousTimestamp;
 		PreviousTimestamp = CurrentTimestamp;
