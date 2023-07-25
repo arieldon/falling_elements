@@ -14,6 +14,7 @@ u32 CellTypeColorTable[CELL_TYPE_COUNT] =
 {
 	[BLANK] = 0x000000,
 	[SAND] = 0xffff00,
+	[WATER] = 0x0000ff,
 };
 
 enum { MAXIMUM_LOCATIONS_COUNT = 1<<4 };
@@ -21,7 +22,7 @@ static s32 LocationsCount;
 static Vector2s Locations[MAXIMUM_LOCATIONS_COUNT];
 static Vector2s PreviousLocation;
 
-static b32 Sanding;
+static cell_type Creating;
 
 static inline b32
 IsInWindowSpace(Vector2s Location)
@@ -54,27 +55,31 @@ HandleInput(void)
 			case ButtonPress:
 			{
 				XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
-				Sanding = 1;
+				switch (Event->button)
+				{
+					case Button1: Creating = SAND; break;
+					case Button3: Creating = WATER; break;
+				}
 				PreviousLocation.X = Event->x;
 				PreviousLocation.Y = Event->y;
 				break;
 			}
 			case ButtonRelease:
 			{
-				Sanding = 0;
+				Creating = BLANK;
 				break;
 			}
 			case MotionNotify:
 			{
 				XPointerMovedEvent *Event = (XPointerMovedEvent *)&GeneralEvent;
-				Vector2s SandGrainLocation = {0};
-				SandGrainLocation.X = Event->x;
-				SandGrainLocation.Y = Event->y;
-				if (IsInWindowSpace(SandGrainLocation))
+				Vector2s CellLocation = {0};
+				CellLocation.X = Event->x;
+				CellLocation.Y = Event->y;
+				if (IsInWindowSpace(CellLocation))
 				{
 					Assert(LocationsCount < MAXIMUM_LOCATIONS_COUNT);
-					Locations[LocationsCount++] = SandGrainLocation;
-					PreviousLocation = SandGrainLocation;
+					Locations[LocationsCount++] = CellLocation;
+					PreviousLocation = CellLocation;
 				}
 				break;
 			}
@@ -144,31 +149,76 @@ main(void)
 			}
 
 			// NOTE(ariel) Model gravity.
-			for (s32 Y = 0; Y < Y_CELL_COUNT - 1; Y += 1)
+			for (s32 Y = 1; Y < Y_CELL_COUNT - 1; Y += 1)
 			{
 				for (s32 X = 1; X < X_CELL_COUNT - 1; X += 1)
 				{
-					cell_type PreviousCellState = CellBuffers[InactiveCellBufferIndex][Y*X_CELL_COUNT + X];
-					cell_type PreviousBottomNeighborState = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)];
-					cell_type PreviousBottomLeftNeighborState = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)];
-					cell_type PreviousBottomRightNeighborState = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)];
-					if (PreviousCellState)
+					// 0 1 2
+					// 3 X 4
+					// 5 6 7
+					cell_type Cell0 = CellBuffers[InactiveCellBufferIndex][(Y-1)*X_CELL_COUNT + (X-1)];
+					cell_type Cell1 = CellBuffers[InactiveCellBufferIndex][(Y-1)*X_CELL_COUNT + (X+0)];
+					cell_type Cell2 = CellBuffers[InactiveCellBufferIndex][(Y-1)*X_CELL_COUNT + (X+1)];
+					cell_type Cell3 = CellBuffers[InactiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X-1)];
+					cell_type CellX = CellBuffers[InactiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X+0)];
+					cell_type Cell4 = CellBuffers[InactiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X+1)];
+					cell_type Cell5 = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)];
+					cell_type Cell6 = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)];
+					cell_type Cell7 = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)];
+					if (CellX == SAND)
 					{
-						if (!PreviousBottomNeighborState)
+						if (!Cell6)
 						{
-							CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)] = SAND;
+							CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)] = CellX;
 						}
-						else if (!PreviousBottomLeftNeighborState)
+						else if (Cell6 == WATER)
 						{
+							CellBuffers[ActiveCellBufferIndex][Y*X_CELL_COUNT + X] = WATER;
+							CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + X] = SAND;
+							CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + X] = SAND;
+						}
+						else if (!Cell5)
+						{
+							CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)] = CellX;
+						}
+						else if (Cell5 == WATER)
+						{
+							CellBuffers[ActiveCellBufferIndex][Y*X_CELL_COUNT + X] = WATER;
+							CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)] = SAND;
 							CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)] = SAND;
 						}
-						else if (!PreviousBottomRightNeighborState)
+						else if (!Cell7)
 						{
+							CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)] = CellX;
+						}
+						else if (Cell7 == WATER)
+						{
+							CellBuffers[ActiveCellBufferIndex][Y*X_CELL_COUNT + X] = WATER;
+							CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)] = SAND;
 							CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)] = SAND;
 						}
 						else
 						{
-							CellBuffers[ActiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X+0)] = SAND;
+							CellBuffers[ActiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X+0)] = CellX;
+						}
+					}
+					else if (CellX == WATER)
+					{
+						if (!Cell6)
+						{
+							CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)] = CellX;
+						}
+						else if (!Cell5)
+						{
+							CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)] = CellX;
+						}
+						else if (!Cell7)
+						{
+							CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)] = CellX;
+						}
+						else
+						{
+							CellBuffers[ActiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X+0)] = CellX;
 						}
 					}
 				}
@@ -176,7 +226,7 @@ main(void)
 		}
 
 		// NOTE(ariel) Map new input in window coordinates to cell space.
-		if (Sanding)
+		if (Creating)
 		{
 			for (s32 Index = 0; Index < LocationsCount - 1; Index += 1)
 			{
@@ -190,14 +240,14 @@ main(void)
 				Assert(CellY < Y_CELL_COUNT);
 				Assert(CellX < X_CELL_COUNT);
 
-				CellBuffers[ActiveCellBufferIndex][CellY*X_CELL_COUNT + CellX] = SAND;
+				CellBuffers[ActiveCellBufferIndex][CellY*X_CELL_COUNT + CellX] = Creating;
 			}
 
 			s32 PreviousLocationY = PreviousLocation.Y / 5;
 			s32 PreviousLocationX = PreviousLocation.X / 5;
 			if (!CellBuffers[InactiveCellBufferIndex][PreviousLocationY*X_CELL_COUNT + PreviousLocationX])
 			{
-				CellBuffers[ActiveCellBufferIndex][PreviousLocationY*X_CELL_COUNT + PreviousLocationX] = SAND;
+				CellBuffers[ActiveCellBufferIndex][PreviousLocationY*X_CELL_COUNT + PreviousLocationX] = Creating;
 			}
 		}
 

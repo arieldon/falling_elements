@@ -9,6 +9,7 @@ enum cell_type
 {
 	BLANK,
 	SAND,
+	WATER,
 	CELL_TYPE_COUNT,
 } __attribute__((packed));
 StaticAssert(sizeof(cell_type) == 1);
