@@ -50,6 +50,10 @@ HandleInput(void)
 				{
 					Running = false;
 				}
+				else if (Event->keycode == XKeysymToKeycode(X11Display, XK_space))
+				{
+					memset(&CellBuffers[InactiveCellBufferIndex], 0, sizeof(CellBuffers[InactiveCellBufferIndex]));
+				}
 				break;
 			}
 			case ButtonPress:
