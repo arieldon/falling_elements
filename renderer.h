@@ -22,6 +22,7 @@ enum
 	X_CELL_COUNT = WINDOW_WIDTH / 5,
 };
 static s32 ActiveCellBufferIndex;
+static s32 InactiveCellBufferIndex;
 static cell_type CellBuffers[2][Y_CELL_COUNT * X_CELL_COUNT];
 
 static u32 Framebuffer[WINDOW_WIDTH * WINDOW_HEIGHT];
