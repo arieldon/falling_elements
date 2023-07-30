@@ -19,13 +19,13 @@ u32 CellTypeColorTable[CELL_TYPE_COUNT] =
 
 enum { MAXIMUM_LOCATIONS_COUNT = 1<<4 };
 static s32 LocationsCount;
-static Vector2s Locations[MAXIMUM_LOCATIONS_COUNT];
-static Vector2s PreviousLocation;
+static vector2s Locations[MAXIMUM_LOCATIONS_COUNT];
+static vector2s PreviousLocation;
 
 static cell_type Creating;
 
 static inline b32
-IsInWindowSpace(Vector2s Location)
+IsInWindowSpace(vector2s Location)
 {
 	b32 XMin = Location.X >= 0;
 	b32 YMin = Location.Y >= 0;
@@ -52,7 +52,7 @@ HandleInput(void)
 				}
 				else if (Event->keycode == XKeysymToKeycode(X11Display, XK_space))
 				{
-					memset(&CellBuffers[InactiveCellBufferIndex], 0, sizeof(CellBuffers[InactiveCellBufferIndex]));
+					memset(CellBuffer, 0, sizeof(CellBuffer));
 				}
 				break;
 			}
@@ -76,7 +76,7 @@ HandleInput(void)
 			case MotionNotify:
 			{
 				XPointerMovedEvent *Event = (XPointerMovedEvent *)&GeneralEvent;
-				Vector2s CellLocation = {0};
+				vector2s CellLocation = {0};
 				CellLocation.X = Event->x;
 				CellLocation.Y = Event->y;
 				if (IsInWindowSpace(CellLocation))
@@ -104,7 +104,7 @@ HandleInput(void)
 static void
 MapCellToPixels(s32 CellY, s32 CellX)
 {
-	u32 Color = CellTypeColorTable[CellBuffers[ActiveCellBufferIndex][CellY*X_CELL_COUNT + CellX]];
+	u32 Color = CellTypeColorTable[CellBuffer[CellY*X_CELL_COUNT + CellX]];
 	s32 PixelY = CellY * 5;
 	s32 PixelX = CellX * 5;
 
@@ -129,69 +129,79 @@ MapCellToPixels(s32 CellY, s32 CellX)
 static void
 TransitionSandCell(s32 X, s32 Y)
 {
-	cell_type CellX = CellBuffers[InactiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X+0)];
-	cell_type Cell5 = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)];
-	cell_type Cell6 = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)];
-	cell_type Cell7 = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)];
+	cell_type Cell5 = CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)];
+	cell_type Cell6 = CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)];
+	cell_type Cell7 = CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)];
 
+	// FIXME(ariel) The water doesn't move out of the way. Instead, it's get
+	// swapped, and that creates odd phenomena, like single-line water towers.
+	CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = BLANK;
 	if (!Cell6)
 	{
-		CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)] = SAND;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)] = SAND;
 	}
 	else if (Cell6 == WATER)
 	{
-		CellBuffers[ActiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
-		CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)] = SAND;
+		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)] = SAND;
 	}
 	else if (!Cell5)
 	{
-		CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)] = SAND;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)] = SAND;
 	}
 	else if (Cell5 == WATER)
 	{
-		CellBuffers[ActiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
-		CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)] = SAND;
+		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)] = SAND;
 	}
 	else if (!Cell7)
 	{
-		CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)] = SAND;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)] = SAND;
 	}
 	else if (Cell7 == WATER)
 	{
-		CellBuffers[ActiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
-		CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)] = SAND;
+		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)] = SAND;
 	}
 	else
 	{
-		CellBuffers[ActiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X+0)] = SAND;
+		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = SAND;
 	}
 }
 
 static void
 TransitionWaterCell(s32 X, s32 Y)
 {
-	cell_type CellX = CellBuffers[InactiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X+0)];
-	cell_type Cell3 = CellBuffers[InactiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X-1)];
-	cell_type Cell4 = CellBuffers[InactiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X+1)];
-	cell_type Cell5 = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)];
-	cell_type Cell6 = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)];
-	cell_type Cell7 = CellBuffers[InactiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)];
+	cell_type Cell3 = CellBuffer[(Y+0)*X_CELL_COUNT + (X-1)];
+	cell_type Cell4 = CellBuffer[(Y+0)*X_CELL_COUNT + (X+1)];
+	cell_type Cell5 = CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)];
+	cell_type Cell6 = CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)];
+	cell_type Cell7 = CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)];
 
+	CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = BLANK;
 	if (!Cell6)
 	{
-		CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+0)] = WATER;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)] = WATER;
 	}
 	else if (!Cell5)
 	{
-		CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X-1)] = WATER;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)] = WATER;
 	}
 	else if (!Cell7)
 	{
-		CellBuffers[ActiveCellBufferIndex][(Y+1)*X_CELL_COUNT + (X+1)] = WATER;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)] = WATER;
+	}
+	else if (!Cell3)
+	{
+		CellBuffer[(Y+0)*X_CELL_COUNT + (X-1)] = WATER;
+	}
+	else if (!Cell4)
+	{
+		CellBuffer[(Y+0)*X_CELL_COUNT + (X+1)] = WATER;
 	}
 	else
 	{
-		CellBuffers[ActiveCellBufferIndex][(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
+		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
 	}
 }
 
@@ -215,7 +225,7 @@ main(void)
 		{
 			for (s32 Index = 0; Index < LocationsCount - 1; Index += 1)
 			{
-				Vector2s Location = Locations[Index];
+				vector2s Location = Locations[Index];
 
 				s32 CellY = Location.Y / 5;
 				s32 CellX = Location.X / 5;
@@ -225,30 +235,27 @@ main(void)
 				Assert(CellY < Y_CELL_COUNT);
 				Assert(CellX < X_CELL_COUNT);
 
-				CellBuffers[ActiveCellBufferIndex][CellY*X_CELL_COUNT + CellX] = Creating;
+				CellBuffer[CellY*X_CELL_COUNT + CellX] = Creating;
 			}
 
 			s32 PreviousLocationY = PreviousLocation.Y / 5;
 			s32 PreviousLocationX = PreviousLocation.X / 5;
-			switch (Creating)
+
+			// TODO(ariel) Create "cloud" of water cells. Define the cloud as a
+			// circle, i.e. radius and center, and fill cells within radius
+			// randomly.
+			circle Cloud = {0};
+			Cloud.Radius = 4;
+			Cloud.Center.Y = PreviousLocationY;
+			Cloud.Center.X = PreviousLocationX;
+
+			// FIXME(ariel) Quit treating circle as square.
+			for (s32 Y = Cloud.Center.Y - Cloud.Radius; Y < Cloud.Center.Y + Cloud.Radius; Y += 1)
 			{
-				case SAND:
+				for (s32 X = Cloud.Center.X - Cloud.Radius; X < Cloud.Center.X + Cloud.Radius; X += 1)
 				{
-					if (!CellBuffers[InactiveCellBufferIndex][PreviousLocationY*X_CELL_COUNT + PreviousLocationX])
-					{
-						CellBuffers[ActiveCellBufferIndex][PreviousLocationY*X_CELL_COUNT + PreviousLocationX] = Creating;
-					}
-					break;
-				}
-				case WATER:
-				{
-					// TODO(ariel) Create "cloud" of water cells. Define the cloud as a
-					// circle, i.e. radius and center, and fill cells within radius
-					// randomly.
-					CellBuffers[ActiveCellBufferIndex][PreviousLocationY*X_CELL_COUNT + PreviousLocationX] = Creating;
-					CellBuffers[ActiveCellBufferIndex][PreviousLocationY*X_CELL_COUNT + (PreviousLocationX-1)] = Creating;
-					CellBuffers[ActiveCellBufferIndex][PreviousLocationY*X_CELL_COUNT + (PreviousLocationX+1)] = Creating;
-					break;
+					// TODO(ariel) Remove dependence on rand().
+					CellBuffer[Y*X_CELL_COUNT + X] = Creating * (rand() & 1);
 				}
 			}
 		}
@@ -258,15 +265,15 @@ main(void)
 			// NOTE(ariel) Persist state of bottom row of cells across frames.
 			for (s32 X = 0; X < X_CELL_COUNT; X += 1)
 			{
-				cell_type PreviousCellState = CellBuffers[InactiveCellBufferIndex][(Y_CELL_COUNT-1)*X_CELL_COUNT + X];
-				CellBuffers[ActiveCellBufferIndex][(Y_CELL_COUNT-1)*X_CELL_COUNT + X] = PreviousCellState;
+				cell_type PreviousCellState = CellBuffer[(Y_CELL_COUNT-1)*X_CELL_COUNT + X];
+				CellBuffer[(Y_CELL_COUNT-1)*X_CELL_COUNT + X] = PreviousCellState;
 			}
 
 			for (s32 Y = Y_CELL_COUNT - 2; Y > 0; Y -= 1)
 			{
-				for (s32 X = 1; X < X_CELL_COUNT - 1; X += 1)
+				for (s32 X = X_CELL_COUNT - 1; X > 0; X -= 1)
 				{
-					switch (CellBuffers[InactiveCellBufferIndex][Y*X_CELL_COUNT + X])
+					switch (CellBuffer[Y*X_CELL_COUNT + X])
 					{
 						case BLANK: break;
 						case SAND: TransitionSandCell(X, Y); break;
@@ -281,7 +288,7 @@ main(void)
 		{
 			for (s32 X = 0; X < X_CELL_COUNT; X += 1)
 			{
-				if (CellBuffers[ActiveCellBufferIndex][Y*X_CELL_COUNT + X])
+				if (CellBuffer[Y*X_CELL_COUNT + X])
 				{
 					MapCellToPixels(Y, X);
 				}
@@ -290,11 +297,8 @@ main(void)
 
 		PresentBuffer();
 		memset(Framebuffer, 0, WINDOW_HEIGHT*WINDOW_WIDTH*sizeof(u32));
-		memset(CellBuffers[InactiveCellBufferIndex], 0, Y_CELL_COUNT*X_CELL_COUNT*sizeof(cell_type));
 
 		LocationsCount = 0;
-		ActiveCellBufferIndex ^= 1;
-		InactiveCellBufferIndex = ActiveCellBufferIndex ^ 1;
 
 		DeltaTime = CurrentTimestamp - PreviousTimestamp;
 		PreviousTimestamp = CurrentTimestamp;
