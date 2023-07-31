@@ -13,6 +13,7 @@
 u32 CellTypeColorTable[CELL_TYPE_COUNT] =
 {
 	[BLANK] = 0x000000,
+	[HOLY_BOUNDARY] = 0xffffff,
 	[SAND] = 0xffff00,
 	[WATER] = 0x0000ff,
 };
@@ -265,13 +266,18 @@ main(void)
 			// NOTE(ariel) Persist state of bottom row of cells across frames.
 			for (s32 X = 0; X < X_CELL_COUNT; X += 1)
 			{
-				cell_type PreviousCellState = CellBuffer[(Y_CELL_COUNT-1)*X_CELL_COUNT + X];
-				CellBuffer[(Y_CELL_COUNT-1)*X_CELL_COUNT + X] = PreviousCellState;
+				CellBuffer[(Y_CELL_COUNT-1)*X_CELL_COUNT + X] = HOLY_BOUNDARY;
+				CellBuffer[X] = HOLY_BOUNDARY;
+			}
+			for (s32 Y = 0; Y < Y_CELL_COUNT; Y += 1)
+			{
+				CellBuffer[Y*X_CELL_COUNT + 0] = HOLY_BOUNDARY;
+				CellBuffer[Y*X_CELL_COUNT + (X_CELL_COUNT-1)] = HOLY_BOUNDARY;
 			}
 
-			for (s32 Y = Y_CELL_COUNT - 2; Y > 0; Y -= 1)
+			for (s32 Y = Y_CELL_COUNT - 2; Y > 1; Y -= 1)
 			{
-				for (s32 X = X_CELL_COUNT - 1; X > 0; X -= 1)
+				for (s32 X = X_CELL_COUNT - 2; X > 1; X -= 1)
 				{
 					switch (CellBuffer[Y*X_CELL_COUNT + X])
 					{
