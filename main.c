@@ -242,21 +242,25 @@ main(void)
 			s32 PreviousLocationY = PreviousLocation.Y / 5;
 			s32 PreviousLocationX = PreviousLocation.X / 5;
 
-			// TODO(ariel) Create "cloud" of water cells. Define the cloud as a
-			// circle, i.e. radius and center, and fill cells within radius
-			// randomly.
-			circle Cloud = {0};
-			Cloud.Radius = 4;
-			Cloud.Center.Y = PreviousLocationY;
-			Cloud.Center.X = PreviousLocationX;
-
-			// FIXME(ariel) Quit treating circle as square.
-			for (s32 Y = Cloud.Center.Y - Cloud.Radius; Y < Cloud.Center.Y + Cloud.Radius; Y += 1)
+			if (Creating == SAND)
 			{
-				for (s32 X = Cloud.Center.X - Cloud.Radius; X < Cloud.Center.X + Cloud.Radius; X += 1)
+				CellBuffer[PreviousLocationY*X_CELL_COUNT + PreviousLocationX] = Creating;
+			}
+			else if (Creating == WATER)
+			{
+				circle Cloud = {0};
+				Cloud.Radius = 8;
+				Cloud.Center.Y = PreviousLocationY;
+				Cloud.Center.X = PreviousLocationX;
+				for (s32 Y = -Cloud.Radius; Y < Cloud.Radius; Y += 1)
 				{
-					// TODO(ariel) Remove dependence on rand().
-					CellBuffer[Y*X_CELL_COUNT + X] = Creating * (rand() & 1);
+					for (s32 X = -Cloud.Radius; X < Cloud.Radius; X += 1)
+					{
+						b32 PointIsInCircle = X*X + Y*Y <= Cloud.Radius * Cloud.Radius;
+						b32 Chance = (rand() & 7) == 7;
+						cell_type Type = Creating * (PointIsInCircle * Chance);
+						CellBuffer[(Y+Cloud.Center.Y)*X_CELL_COUNT + (X+Cloud.Center.X)] = Type;
+					}
 				}
 			}
 		}
