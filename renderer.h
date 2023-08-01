@@ -34,11 +34,16 @@ struct circle
 
 enum
 {
+	CELL_SIZE = 8,
+	HALF_CELL_SIZE = CELL_SIZE / 2,
+};
+enum
+{
 	// NOTE(ariel) Group pixels into cells in a rather crude way.
 	// TODO(ariel) Create border just inside window frame to address uneven
 	// pixel-to-cell grouping.
-	Y_CELL_COUNT = WINDOW_HEIGHT / 5,
-	X_CELL_COUNT = WINDOW_WIDTH / 5,
+	Y_CELL_COUNT = WINDOW_HEIGHT / CELL_SIZE,
+	X_CELL_COUNT = WINDOW_WIDTH / CELL_SIZE,
 };
 static cell_type CellBuffer[Y_CELL_COUNT * X_CELL_COUNT];
 

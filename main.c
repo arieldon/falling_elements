@@ -106,18 +106,18 @@ static void
 MapCellToPixels(s32 CellY, s32 CellX)
 {
 	u32 Color = CellTypeColorTable[CellBuffer[CellY*X_CELL_COUNT + CellX]];
-	s32 PixelY = CellY * 5;
-	s32 PixelX = CellX * 5;
+	s32 PixelY = CellY * CELL_SIZE;
+	s32 PixelX = CellX * CELL_SIZE;
 
 	Assert(PixelY >= 0);
 	Assert(PixelX >= 0);
 	Assert(PixelY < WINDOW_HEIGHT);
 	Assert(PixelX < WINDOW_WIDTH);
 
-	s32 StartY = Max(PixelY - 2, 0);
-	s32 StartX = Max(PixelX - 2, 0);
-	s32 EndY = Min(PixelY + 2, WINDOW_HEIGHT);
-	s32 EndX = Min(PixelX + 2, WINDOW_WIDTH);
+	s32 StartY = Max(PixelY - HALF_CELL_SIZE, 0);
+	s32 StartX = Max(PixelX - HALF_CELL_SIZE, 0);
+	s32 EndY = Min(PixelY + HALF_CELL_SIZE, WINDOW_HEIGHT);
+	s32 EndX = Min(PixelX + HALF_CELL_SIZE, WINDOW_WIDTH);
 	for (s32 Y = StartY; Y < EndY; Y += 1)
 	{
 		for (s32 X = StartX; X < EndX; X += 1)
@@ -228,8 +228,8 @@ main(void)
 			{
 				vector2s Location = Locations[Index];
 
-				s32 CellY = Location.Y / 5;
-				s32 CellX = Location.X / 5;
+				s32 CellY = Location.Y / CELL_SIZE;
+				s32 CellX = Location.X / CELL_SIZE;
 
 				Assert(CellY >= 0);
 				Assert(CellX >= 0);
@@ -239,8 +239,8 @@ main(void)
 				CellBuffer[CellY*X_CELL_COUNT + CellX] = Creating;
 			}
 
-			s32 PreviousLocationY = PreviousLocation.Y / 5;
-			s32 PreviousLocationX = PreviousLocation.X / 5;
+			s32 PreviousLocationY = PreviousLocation.Y / CELL_SIZE;
+			s32 PreviousLocationX = PreviousLocation.X / CELL_SIZE;
 
 			if (Creating == SAND)
 			{
