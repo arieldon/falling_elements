@@ -1,10 +1,9 @@
-static u32
+static inline u32
 RandomU32(void)
 {
-	// TODO(ariel) Seed using RDSEED or RDRAND instruction?
-	static u32 X = 1234;
-	X ^= X << 13;
-	X ^= X >> 17;
-	X ^= X << 5;
-	return X;
+	// TODO(ariel) Seed initial state using RDSEED or RDRAND instruction?
+	static u64 State = 1234;
+	State = State * 6364136223846793005ull;
+	u32 Output = (u32)((State ^ (State >> 22)) >> (22 + (State >> 61)));
+	return Output;
 }
