@@ -130,49 +130,6 @@ MapCellToPixels(s32 CellY, s32 CellX)
 }
 
 static void
-TransitionSandCell(s32 X, s32 Y)
-{
-	cell_type Cell5 = CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)];
-	cell_type Cell6 = CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)];
-	cell_type Cell7 = CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)];
-
-	// FIXME(ariel) The water doesn't move out of the way. Instead, it's get
-	// swapped, and that creates odd phenomena, like single-line water towers.
-	CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = BLANK;
-	if (!Cell6)
-	{
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)] = SAND;
-	}
-	else if (Cell6 == WATER)
-	{
-		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)] = SAND;
-	}
-	else if (!Cell5)
-	{
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)] = SAND;
-	}
-	else if (Cell5 == WATER)
-	{
-		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)] = SAND;
-	}
-	else if (!Cell7)
-	{
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)] = SAND;
-	}
-	else if (Cell7 == WATER)
-	{
-		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)] = SAND;
-	}
-	else
-	{
-		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = SAND;
-	}
-}
-
-static void
 TransitionWaterCell(s32 X, s32 Y)
 {
 	cell_type Cell3 = CellBuffer[(Y+0)*X_CELL_COUNT + (X-1)];
@@ -205,6 +162,50 @@ TransitionWaterCell(s32 X, s32 Y)
 	else
 	{
 		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
+	}
+}
+
+static void
+TransitionSandCell(s32 X, s32 Y)
+{
+	cell_type Cell5 = CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)];
+	cell_type Cell6 = CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)];
+	cell_type Cell7 = CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)];
+
+	CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = BLANK;
+	if (!Cell6)
+	{
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)] = SAND;
+	}
+	else if (Cell6 == WATER)
+	{
+		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)] = SAND;
+		TransitionWaterCell(X, Y);
+	}
+	else if (!Cell5)
+	{
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)] = SAND;
+	}
+	else if (Cell5 == WATER)
+	{
+		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)] = SAND;
+		TransitionWaterCell(X, Y);
+	}
+	else if (!Cell7)
+	{
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)] = SAND;
+	}
+	else if (Cell7 == WATER)
+	{
+		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)] = SAND;
+		TransitionWaterCell(X, Y);
+	}
+	else
+	{
+		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = SAND;
 	}
 }
 
@@ -268,30 +269,18 @@ main(void)
 		}
 
 		// NOTE(ariel) Transition previous state.
+		// FIXME(ariel) Cells that somehow manage to find their way to the
+		// vertical edges do not transition ever.
+		for (s32 Y = Y_CELL_COUNT - 2; Y > 1; Y -= 1)
 		{
-			// NOTE(ariel) Persist state of bottom row of cells across frames.
-			for (s32 X = 0; X < X_CELL_COUNT; X += 1)
+			for (s32 X = X_CELL_COUNT - 2; X > 1; X -= 1)
 			{
-				CellBuffer[(Y_CELL_COUNT-1)*X_CELL_COUNT + X] = HOLY_BOUNDARY;
-				CellBuffer[X] = HOLY_BOUNDARY;
-			}
-			for (s32 Y = 0; Y < Y_CELL_COUNT; Y += 1)
-			{
-				CellBuffer[Y*X_CELL_COUNT + 0] = HOLY_BOUNDARY;
-				CellBuffer[Y*X_CELL_COUNT + (X_CELL_COUNT-1)] = HOLY_BOUNDARY;
-			}
-
-			for (s32 Y = Y_CELL_COUNT - 2; Y > 1; Y -= 1)
-			{
-				for (s32 X = X_CELL_COUNT - 2; X > 1; X -= 1)
+				switch (CellBuffer[Y*X_CELL_COUNT + X])
 				{
-					switch (CellBuffer[Y*X_CELL_COUNT + X])
-					{
-						case BLANK: break;
-						case SAND: TransitionSandCell(X, Y); break;
-						case WATER: TransitionWaterCell(X, Y); break;
-						case CELL_TYPE_COUNT: break; // NOTE(ariel) Silence compiler warning.
-					}
+					case BLANK: break;
+					case SAND: TransitionSandCell(X, Y); break;
+					case WATER: TransitionWaterCell(X, Y); break;
+					case CELL_TYPE_COUNT: break; // NOTE(ariel) Silence compiler warning.
 				}
 			}
 		}
