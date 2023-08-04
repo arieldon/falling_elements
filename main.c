@@ -6,9 +6,11 @@
 #include "base.h"
 #include "window.h"
 #include "renderer.h"
+#include "random.h"
 
 #include "window.c"
 #include "renderer.c"
+#include "random.c"
 
 u32 CellTypeColorTable[CELL_TYPE_COUNT] =
 {
@@ -257,7 +259,7 @@ main(void)
 					for (s32 X = -Cloud.Radius; X < Cloud.Radius; X += 1)
 					{
 						b32 PointIsInCircle = X*X + Y*Y <= Cloud.Radius * Cloud.Radius;
-						b32 Chance = (rand() & 7) == 7;
+						b32 Chance = (RandomU32() & 7) == 7;
 						cell_type Type = Creating * (PointIsInCircle * Chance);
 						CellBuffer[(Y+Cloud.Center.Y)*X_CELL_COUNT + (X+Cloud.Center.X)] = Type;
 					}
