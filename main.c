@@ -261,8 +261,10 @@ main(void)
 					{
 						b32 PointIsInCircle = X*X + Y*Y <= Cloud.Radius * Cloud.Radius;
 						b32 Chance = (RandomU32() & 7) == 7;
-						cell_type Type = (cell_type)(Creating * PointIsInCircle * Chance);
-						CellBuffer[(Y+Cloud.Center.Y)*X_CELL_COUNT + (X+Cloud.Center.X)] = Type;
+						cell_type *Cell = &CellBuffer[(Y+Cloud.Center.Y)*X_CELL_COUNT + (X+Cloud.Center.X)];
+						cell_type OriginalType = *Cell;
+						cell_type NewType = (cell_type)(Creating * PointIsInCircle * Chance);
+						*Cell = !OriginalType ? NewType : OriginalType;
 					}
 				}
 			}
