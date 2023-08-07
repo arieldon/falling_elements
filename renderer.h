@@ -11,7 +11,6 @@ typedef enum cell_type cell_type;
 enum cell_type
 {
 	BLANK,
-	HOLY_BOUNDARY,
 	SAND,
 	WATER,
 	CELL_TYPE_COUNT,
