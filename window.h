@@ -10,10 +10,11 @@ enum
 StaticAssert(WINDOW_WIDTH > 0);
 StaticAssert(WINDOW_HEIGHT > 0);
 
+static u32 Framebuffer[WINDOW_WIDTH * WINDOW_HEIGHT];
+
 static Display *X11Display;
+static GLXContext X11GLContext;
 static Window X11Window;
-static GC X11GraphicsContext;
-static XImage *X11Image;
 static Atom X11DeleteWindowEvent;
 
 static void OpenWindow(void);

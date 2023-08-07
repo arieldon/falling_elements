@@ -1,9 +1,11 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <GL/glx.h>
 
 #include <time.h>
 
 #include "base.h"
+#include "glload.h"
 #include "window.h"
 #include "renderer.h"
 #include "random.h"
@@ -14,11 +16,12 @@
 
 u32 CellTypeColorTable[CELL_TYPE_COUNT] =
 {
-	[BLANK] = 0x000000,
-	[HOLY_BOUNDARY] = 0xffffff,
-	[SAND] = 0xffff00,
-	[WATER] = 0x0000ff,
+	[BLANK] = 0x00000000,
+	[SAND] = 0xff00ffff,
+	[WATER] = 0xffff0000,
 };
+
+static b32 Running = true;
 
 enum { MAXIMUM_LOCATIONS_COUNT = 1<<4 };
 static s32 LocationsCount;
@@ -124,7 +127,8 @@ MapCellToPixels(s32 CellY, s32 CellX)
 	{
 		for (s32 X = StartX; X < EndX; X += 1)
 		{
-			Framebuffer[Y*WINDOW_WIDTH + X] = Color;
+			// NOTE(ariel) Invert y-texture coordinate for OpenGL.
+			Framebuffer[(WINDOW_HEIGHT-Y-1)*WINDOW_WIDTH + X] = Color;
 		}
 	}
 }
@@ -213,6 +217,7 @@ int
 main(void)
 {
 	OpenWindow();
+	InitializeRenderer();
 
 	u64 CurrentTimestamp = 0;
 	u64 PreviousTimestamp = 0;
@@ -291,15 +296,12 @@ main(void)
 		{
 			for (s32 X = 0; X < X_CELL_COUNT; X += 1)
 			{
-				if (CellBuffer[Y*X_CELL_COUNT + X])
-				{
-					MapCellToPixels(Y, X);
-				}
+				MapCellToPixels(Y, X);
 			}
 		}
 
 		PresentBuffer();
-		memset(Framebuffer, 0, WINDOW_HEIGHT*WINDOW_WIDTH*sizeof(u32));
+		ClearBuffer();
 
 		LocationsCount = 0;
 
