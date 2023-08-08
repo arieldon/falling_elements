@@ -24,6 +24,14 @@ struct vector2s
 	s32 Y;
 };
 
+typedef struct quad quad;
+struct quad
+{
+	s32 X;
+	s32 Y;
+	u32 Color;
+};
+
 typedef struct circle circle;
 struct circle
 {
@@ -40,8 +48,8 @@ enum
 };
 static cell_type CellBuffer[Y_CELL_COUNT * X_CELL_COUNT];
 
-static s32 VerticesCount;
-static vector2s Vertices[WINDOW_WIDTH * WINDOW_HEIGHT];
+static s32 QuadsCount;
+static quad Quads[ArrayCount(CellBuffer)];
 
 static void InitializeRenderer(void);
 static void PresentBuffer(void);

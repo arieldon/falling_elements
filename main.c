@@ -270,20 +270,22 @@ main(void)
 		{
 			for (s32 X = 0; X < X_CELL_COUNT; X += 1)
 			{
-				if (CellBuffer[X_CELL_COUNT*Y + X] != BLANK)
+				cell_type Cell = CellBuffer[X_CELL_COUNT*Y + X];
+				if (Cell != BLANK)
 				{
 					s32 PixelY = Y * CELL_SIZE;
 					s32 PixelX = X * CELL_SIZE;
-					Vertices[VerticesCount].Y = PixelY;
-					Vertices[VerticesCount].X = PixelX;
-					VerticesCount += 1;
+					Quads[QuadsCount].Y = PixelY;
+					Quads[QuadsCount].X = PixelX;
+					Quads[QuadsCount].Color = CellTypeColorTable[Cell];
+					QuadsCount += 1;
 				}
 			}
 		}
 
 		PresentBuffer();
 
-		VerticesCount = 0;
+		QuadsCount = 0;
 		LocationsCount = 0;
 
 		DeltaTime = CurrentTimestamp - PreviousTimestamp;

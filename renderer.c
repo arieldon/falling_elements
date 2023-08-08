@@ -99,8 +99,11 @@ InitializeRenderer(void)
 			"uniform mat4 OrthographicProjection;\n"
 			"layout (location = 0) in vec2 BasePosition;\n"
 			"layout (location = 1) in vec2 InstanceOffset;\n"
+			"layout (location = 2) in vec4 InstanceColor;\n"
+			"out vec4 ColorForFragmentShader;\n"
 			"void main()\n"
 			"{\n"
+			"	ColorForFragmentShader = InstanceColor;\n"
 			"	gl_Position = OrthographicProjection * vec4(BasePosition + InstanceOffset, 0.0f, 1.0f);\n"
 			"}\n";
 		GLuint VertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -109,10 +112,11 @@ InitializeRenderer(void)
 
 		const char *FragmentShaderSource =
 			"#version 330 core\n"
-			"out vec4 Color;\n"
+			"in vec4 ColorForFragmentShader;\n"
+			"out vec4 OutputColor;\n"
 			"void main()\n"
 			"{\n"
-			"	Color = vec4(1.0f);\n"
+			"	OutputColor = ColorForFragmentShader;\n"
 			"}\n";
 		GLuint FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 		glShaderSource(FragmentShader, 1, &FragmentShaderSource, 0);
@@ -165,11 +169,15 @@ InitializeRenderer(void)
 		GLuint InstancesBuffer = 0;
 		glGenBuffers(1, &InstancesBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, InstancesBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), 0, GL_STREAM_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Quads), 0, GL_STREAM_DRAW);
 
 		glEnableVertexAttribArray(INSTANCE_OFFSET);
-		glVertexAttribPointer(INSTANCE_OFFSET, 2, GL_INT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(INSTANCE_OFFSET, 2, GL_INT, GL_FALSE, sizeof(Quads[0]), (void *)0);
 		glVertexAttribDivisor(INSTANCE_OFFSET, 1);
+
+		glEnableVertexAttribArray(INSTANCE_COLOR);
+		glVertexAttribPointer(INSTANCE_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Quads[0]), (void *)(sizeof(s32) * 2));
+		glVertexAttribDivisor(INSTANCE_COLOR, 1);
 	}
 
 	Assert(glGetError() == GL_NO_ERROR);
@@ -179,8 +187,8 @@ static void
 PresentBuffer(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, VerticesCount * sizeof(Vertices[0]), Vertices);
-	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, VerticesCount);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Quads[0]) * QuadsCount, Quads);
+	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, QuadsCount);
 	glXSwapBuffers(X11Display, X11Window);
 }
 
