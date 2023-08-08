@@ -252,7 +252,13 @@ main(void)
 
 			if (Creating == SAND)
 			{
+#if 0
 				CellBuffer[PreviousLocationY*X_CELL_COUNT + PreviousLocationX] = Creating;
+#else
+				Vertices[VerticesCount].X = PreviousLocation.X;
+				Vertices[VerticesCount].Y = PreviousLocation.Y;
+				VerticesCount += 1;
+#endif
 			}
 			else if (Creating == WATER)
 			{

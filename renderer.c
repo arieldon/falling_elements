@@ -25,16 +25,36 @@ OpenGLDebugMessageCallback(
 }
 #endif
 
+// TODO(ariel) Reduce this. I only need to project X and Y.
 static void
-InitializeDummyTexture(void)
+SetOrthographicProjection(GLuint ShaderProgram)
 {
-	GLuint Texture = 0;
-	glActiveTexture(GL_TEXTURE0);
-	glGenTextures(1, &Texture);
-	glBindTexture(GL_TEXTURE_2D, Texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, WINDOW_WIDTH, WINDOW_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, Framebuffer);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// NOTE(ariel) Flip `Bottom` and `Top` since to map Y onto (relatively)
+	// inverted OpenGL coordinate system.
+	f32 Left = 0.0f;
+	f32 Right = WINDOW_WIDTH;
+	f32 Bottom = WINDOW_HEIGHT;
+	f32 Top = 0.0f;
+	f32 Near = -1.0f;
+	f32 Far = 1.0f;
+
+	f32 X  = +2.0f / (Right - Left);
+	f32 Y  = +2.0f / (Top - Bottom);
+	f32 Z  = -2.0f / (Far - Near);
+	f32 TX = -(Right + Left) / (Right - Left);
+	f32 TY = -(Top + Bottom) / (Top - Bottom);
+	f32 TZ = -(Far + Near) / (Far - Near);
+
+	f32 OrthographicProjection[4][4] =
+	{
+		{    X,  0.0f,  0.0f, 0.0f, },
+		{  0.f,     Y,  0.0f, 0.0f, },
+		{  0.f,  0.0f,     Z, 0.0f, },
+		{   TX,    TY,    TZ, 1.0f, },
+	};
+
+	GLint UniformLocation = glGetUniformLocation(ShaderProgram, "OrthographicProjection");
+	glUniformMatrix4fv(UniformLocation, 1, GL_FALSE, (f32 *)OrthographicProjection);
 }
 
 // FIXME(ariel) Free any resources allocated. I don't believe GPU memory works
@@ -75,12 +95,11 @@ InitializeRenderer(void)
 	{
 		const char *VertexShaderSource =
 			"#version 330 core\n"
+			"uniform mat4 OrthographicProjection;\n"
 			"layout (location = 0) in vec2 Position;\n"
-			"out vec2 TextureCoordinate;\n"
 			"void main()\n"
 			"{\n"
-			"	TextureCoordinate = Position * 0.5 + 0.5;\n"
-			"	gl_Position = vec4(Position, 0.0, 1.0);\n"
+			"	gl_Position = OrthographicProjection * vec4(Position, 0.0f, 1.0f);\n"
 			"}\n";
 		GLuint VertexShader = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(VertexShader, 1, &VertexShaderSource, 0);
@@ -88,12 +107,10 @@ InitializeRenderer(void)
 
 		const char *FragmentShaderSource =
 			"#version 330 core\n"
-			"uniform sampler2D Texture;\n"
-			"in vec2 TextureCoordinate;\n"
 			"out vec4 Color;\n"
 			"void main()\n"
 			"{\n"
-			"	Color = texture(Texture, TextureCoordinate);\n"
+			"	Color = vec4(1.0f);\n"
 			"}\n";
 		GLuint FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 		glShaderSource(FragmentShader, 1, &FragmentShaderSource, 0);
@@ -112,6 +129,10 @@ InitializeRenderer(void)
 		glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &LinkStatus); Assert(LinkStatus);
 
 		glUseProgram(ShaderProgram);
+		SetOrthographicProjection(ShaderProgram);
+
+		glDeleteShader(FragmentShader);
+		glDeleteShader(VertexShader);
 	}
 
 	// NOTE(ariel) Allocate and load arrays on GPU.
@@ -120,27 +141,13 @@ InitializeRenderer(void)
 		glGenVertexArrays(1, &VertexArray);
 		glBindVertexArray(VertexArray);
 
-		GLfloat DummyVertices[] =
-		{
-			// NOTE(ariel) Encode poitns of top-right triangle.
-			-1.0f, +1.0f,
-			+1.0f, +1.0f,
-			+1.0f, -1.0f,
-
-			// NOTE(ariel) Encode points of bottom-left triangle.
-			+1.0f, -1.0f,
-			-1.0f, -1.0f,
-			-1.0f, +1.0f,
-		};
 		GLuint VerticesBuffer = 0;
 		glGenBuffers(1, &VerticesBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, VerticesBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(DummyVertices), DummyVertices, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STREAM_DRAW);
 
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(0, 2, GL_INT, GL_FALSE, 0, 0);
 		glEnableVertexAttribArray(0);
-
-		InitializeDummyTexture();
 	}
 
 	Assert(glGetError() == GL_NO_ERROR);
@@ -161,12 +168,8 @@ ClearBuffer(void)
 static void
 PresentBuffer(void)
 {
-	s32 XStart = 0;
-	s32 YStart = 0;
-	glTexSubImage2D(GL_TEXTURE_2D, 0,
-		XStart, YStart, WINDOW_WIDTH, WINDOW_HEIGHT,
-		GL_RGBA, GL_UNSIGNED_BYTE, Framebuffer);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, VerticesCount * sizeof(Vertices[0]), Vertices);
+	glDrawArrays(GL_POINTS, 0, VerticesCount);
 	glXSwapBuffers(X11Display, X11Window);
 }
 

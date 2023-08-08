@@ -46,6 +46,9 @@ enum
 };
 static cell_type CellBuffer[Y_CELL_COUNT * X_CELL_COUNT];
 
+static s32 VerticesCount;
+static vector2s Vertices[WINDOW_WIDTH * WINDOW_HEIGHT];
+
 static void InitializeRenderer(void);
 static void ClearBuffer(void);
 static void PresentBuffer(void);
