@@ -35,12 +35,6 @@ enum
 {
 	CELL_SIZE = 8,
 	HALF_CELL_SIZE = CELL_SIZE / 2,
-};
-enum
-{
-	// NOTE(ariel) Group pixels into cells in a rather crude way.
-	// TODO(ariel) Create border just inside window frame to address uneven
-	// pixel-to-cell grouping.
 	Y_CELL_COUNT = WINDOW_HEIGHT / CELL_SIZE,
 	X_CELL_COUNT = WINDOW_WIDTH / CELL_SIZE,
 };
@@ -50,7 +44,6 @@ static s32 VerticesCount;
 static vector2s Vertices[WINDOW_WIDTH * WINDOW_HEIGHT];
 
 static void InitializeRenderer(void);
-static void ClearBuffer(void);
 static void PresentBuffer(void);
 
 static inline u64 GetTime(void);

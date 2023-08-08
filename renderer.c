@@ -92,14 +92,16 @@ InitializeRenderer(void)
 #endif
 
 	// NOTE(ariel) Build and link shader program.
+	enum { BASE_POSITION = 0, INSTANCE_OFFSET = 1, INSTANCE_COLOR = 2 };
 	{
 		const char *VertexShaderSource =
 			"#version 330 core\n"
 			"uniform mat4 OrthographicProjection;\n"
-			"layout (location = 0) in vec2 Position;\n"
+			"layout (location = 0) in vec2 BasePosition;\n"
+			"layout (location = 1) in vec2 InstanceOffset;\n"
 			"void main()\n"
 			"{\n"
-			"	gl_Position = OrthographicProjection * vec4(Position, 0.0f, 1.0f);\n"
+			"	gl_Position = OrthographicProjection * vec4(BasePosition + InstanceOffset, 0.0f, 1.0f);\n"
 			"}\n";
 		GLuint VertexShader = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(VertexShader, 1, &VertexShaderSource, 0);
@@ -141,35 +143,44 @@ InitializeRenderer(void)
 		glGenVertexArrays(1, &VertexArray);
 		glBindVertexArray(VertexArray);
 
+		f32 BaseQuadVertices[] =
+		{
+			+4.0f, +4.0f,
+			+4.0f, -4.0f,
+			-4.0f, +4.0f,
+
+			+4.0f, -4.0f,
+			-4.0f, -4.0f,
+			-4.0f, +4.0f,
+		};
 		GLuint VerticesBuffer = 0;
 		glGenBuffers(1, &VerticesBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, VerticesBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STREAM_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(BaseQuadVertices), BaseQuadVertices, GL_STATIC_DRAW);
 
-		glVertexAttribPointer(0, 2, GL_INT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(BASE_POSITION);
+		glVertexAttribPointer(BASE_POSITION, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribDivisor(BASE_POSITION, 0);
+
+		GLuint InstancesBuffer = 0;
+		glGenBuffers(1, &InstancesBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, InstancesBuffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), 0, GL_STREAM_DRAW);
+
+		glEnableVertexAttribArray(INSTANCE_OFFSET);
+		glVertexAttribPointer(INSTANCE_OFFSET, 2, GL_INT, GL_FALSE, 0, 0);
+		glVertexAttribDivisor(INSTANCE_OFFSET, 1);
 	}
 
 	Assert(glGetError() == GL_NO_ERROR);
 }
 
 static void
-ClearBuffer(void)
-{
-	for (s32 Y = 0; Y < WINDOW_HEIGHT; Y += 1)
-	{
-		for (s32 X = 0; X < WINDOW_WIDTH; X += 1)
-		{
-			Framebuffer[WINDOW_WIDTH*Y + X] = 0xffff00ff;
-		}
-	}
-}
-
-static void
 PresentBuffer(void)
 {
+	glClear(GL_COLOR_BUFFER_BIT);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, VerticesCount * sizeof(Vertices[0]), Vertices);
-	glDrawArrays(GL_POINTS, 0, VerticesCount);
+	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, VerticesCount);
 	glXSwapBuffers(X11Display, X11Window);
 }
 

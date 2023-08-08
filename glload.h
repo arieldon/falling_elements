@@ -25,6 +25,8 @@ typedef void (APIENTRY *DEBUGPROC)(GLenum source, GLenum Type, GLuint Id, GLenum
 	GLE(void, CompileShader, GLuint shader) \
 	GLE(void, DebugMessageCallback, DEBUGPROC callback, const void *UserParam) \
 	GLE(void, DebugMessageControl, GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled) \
+	GLE(void, DeleteShader, GLuint shader) \
+	GLE(void, DrawArraysInstanced, GLenum mode, GLint first, GLsizei count, GLsizei instancecount) \
 	GLE(void, EnableVertexAttribArray, GLuint index) \
 	GLE(void, GenBuffers, GLsizei n, GLuint *buffers) \
 	GLE(void, GenVertexArrays, GLsizei n, GLuint *arrays) \
@@ -34,8 +36,8 @@ typedef void (APIENTRY *DEBUGPROC)(GLenum source, GLenum Type, GLuint Id, GLenum
 	GLE(void, ShaderSource, GLuint shader, GLsizei count, const GLchar* const *string, const GLint *length) \
 	GLE(void, UniformMatrix4fv, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value) \
 	GLE(void, UseProgram, GLuint program) \
+	GLE(void, VertexAttribDivisor, GLuint index, GLuint divisor) \
 	GLE(void, VertexAttribPointer, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer) \
-	GLE(void, DeleteShader, GLuint shader) \
 
 // NOTE(ariel) Concatenate procedure name (`Name`) with "proc" to get the name
 // of the procedure in the dynamic library.

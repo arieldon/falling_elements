@@ -108,32 +108,6 @@ HandleInput(void)
 }
 
 static void
-MapCellToPixels(s32 CellY, s32 CellX)
-{
-	u32 Color = CellTypeColorTable[CellBuffer[CellY*X_CELL_COUNT + CellX]];
-	s32 PixelY = CellY * CELL_SIZE;
-	s32 PixelX = CellX * CELL_SIZE;
-
-	Assert(PixelY >= 0);
-	Assert(PixelX >= 0);
-	Assert(PixelY < WINDOW_HEIGHT);
-	Assert(PixelX < WINDOW_WIDTH);
-
-	s32 StartY = Max(PixelY - HALF_CELL_SIZE, 0);
-	s32 StartX = Max(PixelX - HALF_CELL_SIZE, 0);
-	s32 EndY = Min(PixelY + HALF_CELL_SIZE, WINDOW_HEIGHT);
-	s32 EndX = Min(PixelX + HALF_CELL_SIZE, WINDOW_WIDTH);
-	for (s32 Y = StartY; Y < EndY; Y += 1)
-	{
-		for (s32 X = StartX; X < EndX; X += 1)
-		{
-			// NOTE(ariel) Invert y-texture coordinate for OpenGL.
-			Framebuffer[(WINDOW_HEIGHT-Y-1)*WINDOW_WIDTH + X] = Color;
-		}
-	}
-}
-
-static void
 TransitionWaterCell(s32 X, s32 Y)
 {
 	cell_type Cell3 = CellBuffer[(Y+0)*X_CELL_COUNT + (X-1)];
@@ -252,13 +226,7 @@ main(void)
 
 			if (Creating == SAND)
 			{
-#if 0
 				CellBuffer[PreviousLocationY*X_CELL_COUNT + PreviousLocationX] = Creating;
-#else
-				Vertices[VerticesCount].X = PreviousLocation.X;
-				Vertices[VerticesCount].Y = PreviousLocation.Y;
-				VerticesCount += 1;
-#endif
 			}
 			else if (Creating == WATER)
 			{
@@ -302,13 +270,20 @@ main(void)
 		{
 			for (s32 X = 0; X < X_CELL_COUNT; X += 1)
 			{
-				MapCellToPixels(Y, X);
+				if (CellBuffer[X_CELL_COUNT*Y + X] != BLANK)
+				{
+					s32 PixelY = Y * CELL_SIZE;
+					s32 PixelX = X * CELL_SIZE;
+					Vertices[VerticesCount].Y = PixelY;
+					Vertices[VerticesCount].X = PixelX;
+					VerticesCount += 1;
+				}
 			}
 		}
 
 		PresentBuffer();
-		ClearBuffer();
 
+		VerticesCount = 0;
 		LocationsCount = 0;
 
 		DeltaTime = CurrentTimestamp - PreviousTimestamp;
