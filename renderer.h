@@ -38,6 +38,7 @@ typedef enum cell_type cell_type;
 enum cell_type
 {
 	BLANK,
+	WOOD,
 	SAND,
 	WATER,
 	CELL_TYPE_COUNT,

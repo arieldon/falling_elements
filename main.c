@@ -17,6 +17,7 @@
 u32 CellTypeColorTable[CELL_TYPE_COUNT] =
 {
 	[BLANK] = 0x00000000,
+	[WOOD] = 0xff293136,
 	[SAND] = 0xff00ccff,
 	[WATER] = 0xffcc0000,
 };
@@ -68,6 +69,7 @@ HandleInput(void)
 				switch (Event->button)
 				{
 					case Button1: Creating = SAND; break;
+					case Button2: Creating = WOOD; break;
 					case Button3: Creating = WATER; break;
 				}
 				PreviousLocation.X = Event->x;
@@ -236,6 +238,12 @@ main(void)
 				CellBuffer[PreviousLocationY*X_CELL_COUNT + PreviousLocationX].Type = Creating;
 				CellBuffer[PreviousLocationY*X_CELL_COUNT + PreviousLocationX].Color = CellTypeColorTable[Creating] + Modifier;
 			}
+			else if (Creating == WOOD)
+			{
+				u32 Modifier = RandomU32InRange(0x00, 0x22);
+				CellBuffer[PreviousLocationY*X_CELL_COUNT + PreviousLocationX].Type = Creating;
+				CellBuffer[PreviousLocationY*X_CELL_COUNT + PreviousLocationX].Color = CellTypeColorTable[Creating] + Modifier;
+			}
 			else if (Creating == WATER)
 			{
 				circle Cloud = {0};
@@ -272,6 +280,7 @@ main(void)
 				switch (CellBuffer[Y*X_CELL_COUNT + X].Type)
 				{
 					case BLANK: break;
+					case WOOD: break; // NOTE(ariel) Wood cells remain stationary.
 					case SAND: TransitionSandCell(X, Y); break;
 					case WATER: TransitionWaterCell(X, Y); break;
 					case CELL_TYPE_COUNT: break; // NOTE(ariel) Silence compiler warning.
