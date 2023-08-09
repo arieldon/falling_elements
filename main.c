@@ -17,8 +17,8 @@
 u32 CellTypeColorTable[CELL_TYPE_COUNT] =
 {
 	[BLANK] = 0x00000000,
-	[SAND] = 0xff00ffff,
-	[WATER] = 0xffff0000,
+	[SAND] = 0xff00ccff,
+	[WATER] = 0xffcc0000,
 };
 
 static b32 Running = true;
@@ -110,80 +110,85 @@ HandleInput(void)
 static void
 TransitionWaterCell(s32 X, s32 Y)
 {
-	cell_type Cell3 = CellBuffer[(Y+0)*X_CELL_COUNT + (X-1)];
-	cell_type Cell4 = CellBuffer[(Y+0)*X_CELL_COUNT + (X+1)];
-	cell_type Cell5 = CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)];
-	cell_type Cell6 = CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)];
-	cell_type Cell7 = CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)];
+	cell *CellX = &CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)];
+	cell_type Cell3 = CellBuffer[(Y+0)*X_CELL_COUNT + (X-1)].Type;
+	cell_type Cell4 = CellBuffer[(Y+0)*X_CELL_COUNT + (X+1)].Type;
+	cell_type Cell5 = CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)].Type;
+	cell_type Cell6 = CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)].Type;
+	cell_type Cell7 = CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)].Type;
 
-	CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = BLANK;
 	if (!Cell6)
 	{
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)] = WATER;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)] = *CellX;
+		CellX->Type = BLANK;
+		CellX->Color = 0;
 	}
 	else if (!Cell5)
 	{
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)] = WATER;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)] = *CellX;
+		CellX->Type = BLANK;
+		CellX->Color = 0;
 	}
 	else if (!Cell7)
 	{
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)] = WATER;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)] = *CellX;
+		CellX->Type = BLANK;
+		CellX->Color = 0;
 	}
 	else if (!Cell3)
 	{
-		CellBuffer[(Y+0)*X_CELL_COUNT + (X-1)] = WATER;
+		CellBuffer[(Y+0)*X_CELL_COUNT + (X-1)] = *CellX;
+		CellX->Type = BLANK;
+		CellX->Color = 0;
 	}
 	else if (!Cell4)
 	{
-		CellBuffer[(Y+0)*X_CELL_COUNT + (X+1)] = WATER;
-	}
-	else
-	{
-		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
+		CellBuffer[(Y+0)*X_CELL_COUNT + (X+1)] = *CellX;
+		CellX->Type = BLANK;
+		CellX->Color = 0;
 	}
 }
 
 static void
 TransitionSandCell(s32 X, s32 Y)
 {
-	cell_type Cell5 = CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)];
-	cell_type Cell6 = CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)];
-	cell_type Cell7 = CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)];
+	cell *CellX = &CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)];
+	cell *Cell5 = &CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)];
+	cell *Cell6 = &CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)];
+	cell *Cell7 = &CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)];
 
-	CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = BLANK;
-	if (!Cell6)
+	if (!Cell6->Type)
 	{
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)] = SAND;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)] = *CellX;
+		CellX->Type = BLANK;
+		CellX->Color = 0;
 	}
-	else if (Cell6 == WATER)
+	else if (Cell6->Type == WATER)
 	{
-		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)] = SAND;
+		Swap(CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)], CellBuffer[(Y+1)*X_CELL_COUNT + (X+0)]);
 		TransitionWaterCell(X, Y);
 	}
-	else if (!Cell5)
+	else if (!Cell5->Type)
 	{
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)] = SAND;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)] = *CellX;
+		CellX->Type = BLANK;
+		CellX->Color = 0;
 	}
-	else if (Cell5 == WATER)
+	else if (Cell5->Type == WATER)
 	{
-		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)] = SAND;
+		Swap(CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)], CellBuffer[(Y+1)*X_CELL_COUNT + (X-1)]);
 		TransitionWaterCell(X, Y);
 	}
-	else if (!Cell7)
+	else if (!Cell7->Type)
 	{
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)] = SAND;
+		CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)] = *CellX;
+		CellX->Type = BLANK;
+		CellX->Color = 0;
 	}
-	else if (Cell7 == WATER)
+	else if (Cell7->Type == WATER)
 	{
-		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = WATER;
-		CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)] = SAND;
+		Swap(CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)], CellBuffer[(Y+1)*X_CELL_COUNT + (X+1)]);
 		TransitionWaterCell(X, Y);
-	}
-	else
-	{
-		CellBuffer[(Y+0)*X_CELL_COUNT + (X+0)] = SAND;
 	}
 }
 
@@ -218,7 +223,8 @@ main(void)
 				Assert(CellY < Y_CELL_COUNT);
 				Assert(CellX < X_CELL_COUNT);
 
-				CellBuffer[CellY*X_CELL_COUNT + CellX] = Creating;
+				CellBuffer[CellY*X_CELL_COUNT + CellX].Type = Creating;
+				CellBuffer[CellY*X_CELL_COUNT + CellX].Color = CellTypeColorTable[Creating];
 			}
 
 			s32 PreviousLocationY = PreviousLocation.Y / CELL_SIZE;
@@ -226,7 +232,9 @@ main(void)
 
 			if (Creating == SAND)
 			{
-				CellBuffer[PreviousLocationY*X_CELL_COUNT + PreviousLocationX] = Creating;
+				u32 Modifier = RandomU32InRange(0x00, 0x33) << 8;
+				CellBuffer[PreviousLocationY*X_CELL_COUNT + PreviousLocationX].Type = Creating;
+				CellBuffer[PreviousLocationY*X_CELL_COUNT + PreviousLocationX].Color = CellTypeColorTable[Creating] + Modifier;
 			}
 			else if (Creating == WATER)
 			{
@@ -238,12 +246,17 @@ main(void)
 				{
 					for (s32 X = -Cloud.Radius; X < Cloud.Radius; X += 1)
 					{
-						b32 PointIsInCircle = X*X + Y*Y <= Cloud.Radius * Cloud.Radius;
-						b32 Chance = (RandomU32() & 7) == 7;
-						cell_type *Cell = &CellBuffer[(Y+Cloud.Center.Y)*X_CELL_COUNT + (X+Cloud.Center.X)];
-						cell_type OriginalType = *Cell;
-						cell_type NewType = (cell_type)(Creating * PointIsInCircle * Chance);
-						*Cell = !OriginalType ? NewType : OriginalType;
+						cell *Cell = &CellBuffer[(Y+Cloud.Center.Y)*X_CELL_COUNT + (X+Cloud.Center.X)];
+						cell_type OriginalType = Cell->Type;
+						if (!OriginalType)
+						{
+							u32 Modifier = RandomU32InRange(0x00, 0x33) << 8;
+							b32 PointIsInCircle = X*X + Y*Y <= Cloud.Radius * Cloud.Radius;
+							b32 Chance = (RandomU32() & 7) == 7;
+							cell_type NewType = (cell_type)(Creating * PointIsInCircle * Chance);
+							Cell->Type = NewType;
+							Cell->Color = CellTypeColorTable[NewType] + Modifier;
+						}
 					}
 				}
 			}
@@ -256,7 +269,7 @@ main(void)
 		{
 			for (s32 X = X_CELL_COUNT - 2; X > 1; X -= 1)
 			{
-				switch (CellBuffer[Y*X_CELL_COUNT + X])
+				switch (CellBuffer[Y*X_CELL_COUNT + X].Type)
 				{
 					case BLANK: break;
 					case SAND: TransitionSandCell(X, Y); break;
@@ -270,14 +283,14 @@ main(void)
 		{
 			for (s32 X = 0; X < X_CELL_COUNT; X += 1)
 			{
-				cell_type Cell = CellBuffer[X_CELL_COUNT*Y + X];
-				if (Cell != BLANK)
+				cell_type Type = CellBuffer[X_CELL_COUNT*Y + X].Type;
+				if (Type != BLANK)
 				{
 					s32 PixelY = Y * CELL_SIZE;
 					s32 PixelX = X * CELL_SIZE;
 					Quads[QuadsCount].Y = PixelY;
 					Quads[QuadsCount].X = PixelX;
-					Quads[QuadsCount].Color = CellTypeColorTable[Cell];
+					Quads[QuadsCount].Color = CellBuffer[X_CELL_COUNT*Y + X].Color;
 					QuadsCount += 1;
 				}
 			}
