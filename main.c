@@ -1,3 +1,5 @@
+#include "immintrin.h"
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <GL/glx.h>
@@ -12,7 +14,6 @@
 
 #include "window.c"
 #include "renderer.c"
-#include "random.c"
 
 u32 CellTypeColorTable[CELL_TYPE_COUNT] =
 {
@@ -197,6 +198,8 @@ TransitionSandCell(s32 X, s32 Y)
 int
 main(void)
 {
+	random_sequence RandomSequence = SeedRandom();
+
 	OpenWindow();
 	InitializeRenderer();
 
@@ -234,13 +237,13 @@ main(void)
 
 			if (Creating == SAND)
 			{
-				u32 Modifier = RandomU32InRange(0x00, 0x33) << 8;
+				u32 Modifier = RandomU32InRange(&RandomSequence, 0x00, 0x33) << 8;
 				CellBuffer[PreviousLocationY*X_CELL_COUNT + PreviousLocationX].Type = Creating;
 				CellBuffer[PreviousLocationY*X_CELL_COUNT + PreviousLocationX].Color = CellTypeColorTable[Creating] + Modifier;
 			}
 			else if (Creating == WOOD)
 			{
-				u32 Modifier = RandomU32InRange(0x00, 0x22);
+				u32 Modifier = RandomU32InRange(&RandomSequence, 0x00, 0x22);
 				CellBuffer[PreviousLocationY*X_CELL_COUNT + PreviousLocationX].Type = Creating;
 				CellBuffer[PreviousLocationY*X_CELL_COUNT + PreviousLocationX].Color = CellTypeColorTable[Creating] + Modifier;
 			}
@@ -254,13 +257,15 @@ main(void)
 				{
 					for (s32 X = -Cloud.Radius; X < Cloud.Radius; X += 1)
 					{
-						cell *Cell = &CellBuffer[(Y+Cloud.Center.Y)*X_CELL_COUNT + (X+Cloud.Center.X)];
+						u32 CellY = Clamp(Y+Cloud.Center.Y, 0, Y_CELL_COUNT);
+						u32 CellX = Clamp(X+Cloud.Center.X, 0, X_CELL_COUNT);
+						cell *Cell = &CellBuffer[X_CELL_COUNT*CellY + CellX];
 						cell_type OriginalType = Cell->Type;
 						if (!OriginalType)
 						{
-							u32 Modifier = RandomU32InRange(0x00, 0x33) << 8;
+							u32 Modifier = RandomU32InRange(&RandomSequence, 0x00, 0x33) << 8;
 							b32 PointIsInCircle = X*X + Y*Y <= Cloud.Radius * Cloud.Radius;
-							b32 Chance = (RandomU32() & 7) == 7;
+							b32 Chance = RandomU32InRange(&RandomSequence, 0, 31) == 0;
 							cell_type NewType = (cell_type)(Creating * PointIsInCircle * Chance);
 							Cell->Type = NewType;
 							Cell->Color = CellTypeColorTable[NewType] + Modifier;
