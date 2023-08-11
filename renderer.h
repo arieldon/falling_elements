@@ -19,37 +19,6 @@ struct quad
 	u32 Color;
 };
 
-enum
-{
-	CELL_SIZE = 8,
-	HALF_CELL_SIZE = CELL_SIZE / 2,
-	Y_CELL_COUNT = WINDOW_HEIGHT / CELL_SIZE,
-	X_CELL_COUNT = WINDOW_WIDTH / CELL_SIZE,
-};
-
-typedef enum cell_type cell_type;
-enum cell_type
-{
-	BLANK,
-	WOOD,
-	SAND,
-	WATER,
-	CELL_TYPE_COUNT,
-} __attribute__((packed));
-StaticAssert(sizeof(cell_type) == 1);
-
-typedef struct cell cell;
-struct cell
-{
-	u32 Color;
-	cell_type Type;
-};
-
-static cell CellBuffer[Y_CELL_COUNT * X_CELL_COUNT];
-
-static s32 QuadsCount;
-static quad Quads[ArrayCount(CellBuffer)];
-
 typedef struct renderer_context renderer_context;
 struct renderer_context
 {

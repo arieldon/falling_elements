@@ -1,3 +1,6 @@
+static s32 QuadsCount;
+static quad Quads[ArrayCount(CellBuffer)];
+
 #ifdef DEBUG
 static void
 OpenGLDebugMessageCallback(
