@@ -249,24 +249,19 @@ main(void)
 			}
 			else if (Creating == WATER)
 			{
-				circle Cloud = {0};
-				Cloud.Radius = 8;
-				Cloud.Center.Y = PreviousLocationY;
-				Cloud.Center.X = PreviousLocationX;
-				for (s32 Y = -Cloud.Radius; Y < Cloud.Radius; Y += 1)
+				for (s32 Y = -4; Y < 4; Y += 1)
 				{
-					for (s32 X = -Cloud.Radius; X < Cloud.Radius; X += 1)
+					for (s32 X = -4; X < 4; X += 1)
 					{
-						u32 CellY = Clamp(Y+Cloud.Center.Y, 0, Y_CELL_COUNT);
-						u32 CellX = Clamp(X+Cloud.Center.X, 0, X_CELL_COUNT);
+						u32 CellY = Clamp(Y+PreviousLocationY, 0, Y_CELL_COUNT);
+						u32 CellX = Clamp(X+PreviousLocationX, 0, X_CELL_COUNT);
 						cell *Cell = &CellBuffer[X_CELL_COUNT*CellY + CellX];
 						cell_type OriginalType = Cell->Type;
 						if (!OriginalType)
 						{
 							u32 Modifier = RandomU32InRange(&RandomSequence, 0x00, 0x33) << 8;
-							b32 PointIsInCircle = X*X + Y*Y <= Cloud.Radius * Cloud.Radius;
 							b32 Chance = RandomU32InRange(&RandomSequence, 0, 31) == 0;
-							cell_type NewType = (cell_type)(Creating * PointIsInCircle * Chance);
+							cell_type NewType = (cell_type)(Creating * Chance);
 							Cell->Type = NewType;
 							Cell->Color = CellTypeColorTable[NewType] + Modifier;
 						}

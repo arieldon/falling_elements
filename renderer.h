@@ -19,13 +19,6 @@ struct quad
 	u32 Color;
 };
 
-typedef struct circle circle;
-struct circle
-{
-	s32 Radius;
-	vector2s Center;
-};
-
 enum
 {
 	CELL_SIZE = 8,
