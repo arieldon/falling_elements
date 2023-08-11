@@ -201,7 +201,8 @@ main(void)
 	random_sequence RandomSequence = SeedRandom();
 
 	OpenWindow();
-	InitializeRenderer();
+	renderer_context RendererContext = {0};
+	InitializeRenderer(&RendererContext);
 
 	u64 CurrentTimestamp = 0;
 	u64 PreviousTimestamp = 0;
@@ -315,6 +316,7 @@ main(void)
 		SleepForNanoseconds(DeltaTime);
 	}
 
+	TerminateRenderer(RendererContext);
 	CloseWindow();
 	return 0;
 }

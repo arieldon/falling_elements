@@ -25,10 +25,8 @@ OpenGLDebugMessageCallback(
 }
 #endif
 
-// FIXME(ariel) Free any resources allocated. I don't believe GPU memory works
-// like CPU memory, namely shader program and stuff like that.
 static void
-InitializeRenderer(void)
+InitializeRenderer(renderer_context *Context)
 {
 	LoadOpenGLExtensions();
 
@@ -112,6 +110,8 @@ InitializeRenderer(void)
 
 		glDeleteShader(FragmentShader);
 		glDeleteShader(VertexShader);
+
+		Context->ShaderProgram = ShaderProgram;
 	}
 
 	// NOTE(ariel) Allocate and load arrays on GPU.
@@ -151,9 +151,22 @@ InitializeRenderer(void)
 		glEnableVertexAttribArray(INSTANCE_COLOR);
 		glVertexAttribPointer(INSTANCE_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Quads[0]), (void *)(sizeof(s32) * 2));
 		glVertexAttribDivisor(INSTANCE_COLOR, 1);
+
+		Context->VertexArray = VertexArray;
+		Context->InstancesBuffer = InstancesBuffer;
+		Context->BaseVerticesBuffer = VerticesBuffer;
 	}
 
 	Assert(glGetError() == GL_NO_ERROR);
+}
+
+static void
+TerminateRenderer(renderer_context Context)
+{
+	glDeleteProgram(Context.ShaderProgram);
+	glDeleteBuffers(1, &Context.InstancesBuffer);
+	glDeleteBuffers(1, &Context.BaseVerticesBuffer);
+	glDeleteVertexArrays(1, &Context.VertexArray);
 }
 
 static void

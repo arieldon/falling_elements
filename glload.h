@@ -25,7 +25,10 @@ typedef void (APIENTRY *DEBUGPROC)(GLenum source, GLenum Type, GLuint Id, GLenum
 	GLE(void, CompileShader, GLuint shader) \
 	GLE(void, DebugMessageCallback, DEBUGPROC callback, const void *UserParam) \
 	GLE(void, DebugMessageControl, GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled) \
+	GLE(void, DeleteBuffers, GLsizei n, const GLuint *buffers) \
+	GLE(void, DeleteProgram, GLuint program) \
 	GLE(void, DeleteShader, GLuint shader) \
+	GLE(void, DeleteVertexArrays,	GLsizei n, const GLuint *arrays) \
 	GLE(void, DrawArraysInstanced, GLenum mode, GLint first, GLsizei count, GLsizei instancecount) \
 	GLE(void, EnableVertexAttribArray, GLuint index) \
 	GLE(void, GenBuffers, GLsizei n, GLuint *buffers) \

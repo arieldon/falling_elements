@@ -50,7 +50,18 @@ static cell CellBuffer[Y_CELL_COUNT * X_CELL_COUNT];
 static s32 QuadsCount;
 static quad Quads[ArrayCount(CellBuffer)];
 
-static void InitializeRenderer(void);
+typedef struct renderer_context renderer_context;
+struct renderer_context
+{
+	GLuint ShaderProgram;
+	GLuint VertexArray;
+	GLuint InstancesBuffer;
+	GLuint BaseVerticesBuffer;
+};
+
+static void InitializeRenderer(renderer_context *Context);
+static void TerminateRenderer(renderer_context Context);
+
 static void PresentBuffer(void);
 
 static inline u64 GetTime(void);
