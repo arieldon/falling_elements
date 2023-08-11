@@ -25,38 +25,6 @@ OpenGLDebugMessageCallback(
 }
 #endif
 
-// TODO(ariel) Reduce this. I only need to project X and Y.
-static void
-SetOrthographicProjection(GLuint ShaderProgram)
-{
-	// NOTE(ariel) Flip `Bottom` and `Top` since to map Y onto (relatively)
-	// inverted OpenGL coordinate system.
-	f32 Left = 0.0f;
-	f32 Right = WINDOW_WIDTH;
-	f32 Bottom = WINDOW_HEIGHT;
-	f32 Top = 0.0f;
-	f32 Near = -1.0f;
-	f32 Far = 1.0f;
-
-	f32 X  = +2.0f / (Right - Left);
-	f32 Y  = +2.0f / (Top - Bottom);
-	f32 Z  = -2.0f / (Far - Near);
-	f32 TX = -(Right + Left) / (Right - Left);
-	f32 TY = -(Top + Bottom) / (Top - Bottom);
-	f32 TZ = -(Far + Near) / (Far - Near);
-
-	f32 OrthographicProjection[4][4] =
-	{
-		{    X,  0.0f,  0.0f, 0.0f, },
-		{  0.f,     Y,  0.0f, 0.0f, },
-		{  0.f,  0.0f,     Z, 0.0f, },
-		{   TX,    TY,    TZ, 1.0f, },
-	};
-
-	GLint UniformLocation = glGetUniformLocation(ShaderProgram, "OrthographicProjection");
-	glUniformMatrix4fv(UniformLocation, 1, GL_FALSE, (f32 *)OrthographicProjection);
-}
-
 // FIXME(ariel) Free any resources allocated. I don't believe GPU memory works
 // like CPU memory, namely shader program and stuff like that.
 static void
@@ -96,7 +64,6 @@ InitializeRenderer(void)
 	{
 		const char *VertexShaderSource =
 			"#version 330 core\n"
-			"uniform mat4 OrthographicProjection;\n"
 			"layout (location = 0) in vec2 BasePosition;\n"
 			"layout (location = 1) in vec2 InstanceOffset;\n"
 			"layout (location = 2) in vec4 InstanceColor;\n"
@@ -104,7 +71,14 @@ InitializeRenderer(void)
 			"void main()\n"
 			"{\n"
 			"	ColorForFragmentShader = InstanceColor;\n"
-			"	gl_Position = OrthographicProjection * vec4(BasePosition + InstanceOffset, 0.0f, 1.0f);\n"
+			"	vec2 CellPosition = BasePosition + InstanceOffset;\n"
+			// NOTE(ariel) Split standard orthographic projection matrix into two
+			// matrices: first scale, second translate.
+			"	CellPosition.x *= 2.0f / 1920.0f;\n"
+			"	CellPosition.x += -1;\n"
+			"	CellPosition.y *= -2.0f / 1080.0f;\n"
+			"	CellPosition.y += 1;\n"
+			"	gl_Position = vec4(CellPosition, 0.0f, 1.0f);\n"
 			"}\n";
 		GLuint VertexShader = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(VertexShader, 1, &VertexShaderSource, 0);
@@ -135,7 +109,6 @@ InitializeRenderer(void)
 		glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &LinkStatus); Assert(LinkStatus);
 
 		glUseProgram(ShaderProgram);
-		SetOrthographicProjection(ShaderProgram);
 
 		glDeleteShader(FragmentShader);
 		glDeleteShader(VertexShader);
