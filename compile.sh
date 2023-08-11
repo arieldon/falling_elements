@@ -6,7 +6,7 @@ BIN="sand"
 COMPILER="clang"
 
 CFLAGS="-std=c11 -march=native -D_DEFAULT_SOURCE"
-WARNINGS="-Wall -Wextra -Wshadow -Wconversion -Wdouble-promotion -Wno-unused-function -Wno-sign-conversion"
+WARNINGS="-Wall -Wextra -Wshadow -Wconversion -Wdouble-promotion -Wno-unused-function -Wno-sign-conversion -Wno-string-conversion"
 LIBRARIES="-lX11 -lGL"
 FLAGS="$CFLAGS $WARNINGS $LIBRARIES"
 
