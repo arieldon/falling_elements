@@ -24,17 +24,18 @@ TransitionCell(s32 X, s32 Y)
 static void
 TransitionWaterCell(s32 X, s32 Y)
 {
+	u32 Direction = RandomU32InRange(0, 1) ? -1 : 1;
 	if (Cell(X, Y+1).Type < WATER)
 	{
 		Swap(Cell(X, Y), Cell(X, Y+1));
 	}
-	else if (Cell(X+1, Y).Type < WATER)
+	else if (Cell(X-Direction, Y).Type < WATER)
 	{
-		Swap(Cell(X, Y), Cell(X+1, Y));
+		Swap(Cell(X, Y), Cell(X-Direction, Y));
 	}
-	else if (Cell(X-1, Y).Type < WATER)
+	else if (Cell(X+Direction, Y).Type < WATER)
 	{
-		Swap(Cell(X, Y), Cell(X-1, Y));
+		Swap(Cell(X, Y), Cell(X+Direction, Y));
 	}
 }
 
