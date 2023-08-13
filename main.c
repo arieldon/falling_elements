@@ -114,6 +114,7 @@ main(void)
 	renderer_context RendererContext = {0};
 	InitializeRenderer(&RendererContext);
 
+	u64 FrameCount = 0;
 	u64 CurrentTimestamp = 0;
 	u64 PreviousTimestamp = 0;
 	u64 DeltaTime = 0;
@@ -187,11 +188,31 @@ main(void)
 			}
 		}
 
-		for (s32 Y = Y_CELL_COUNT-1; Y > 0; Y -= 1)
+		for (s32 Y = Y_CELL_COUNT-1; Y > CELL_START; Y -= 1)
 		{
-			for (s32 X = X_CELL_COUNT-1; X > 0; X -= 1)
+			s32 Y0 = Y;
+			s32 Y1 = Y-1;
+			if (FrameCount & 1)
 			{
-				TransitionCell(X, Y);
+				for (s32 ReverseX = X_CELL_COUNT-1; ReverseX >= CELL_START; ReverseX -= 1)
+				{
+					TransitionCell(ReverseX, Y0);
+				}
+				for (s32 ForwardX = CELL_START; ForwardX < X_CELL_COUNT; ForwardX += 1)
+				{
+					TransitionCell(ForwardX, Y1);
+				}
+			}
+			else
+			{
+				for (s32 ForwardX = CELL_START; ForwardX < X_CELL_COUNT; ForwardX += 1)
+				{
+					TransitionCell(ForwardX, Y0);
+				}
+				for (s32 ReverseX = X_CELL_COUNT-1; ReverseX >= CELL_START; ReverseX -= 1)
+				{
+					TransitionCell(ReverseX, Y1);
+				}
 			}
 		}
 
@@ -215,6 +236,7 @@ main(void)
 
 		QuadsCount = 0;
 		LocationsCount = 0;
+		FrameCount += 1;
 
 		DeltaTime = CurrentTimestamp - PreviousTimestamp;
 		PreviousTimestamp = CurrentTimestamp;
