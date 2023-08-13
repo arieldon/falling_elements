@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define thread_local _Thread_local
+
 typedef  uint8_t    u8;
 typedef   int8_t    s8;
 typedef uint16_t   u16;

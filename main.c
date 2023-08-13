@@ -108,7 +108,7 @@ HandleInput(void)
 int
 main(void)
 {
-	random_sequence RandomSequence = SeedRandom();
+	SeedRandom();
 
 	OpenWindow();
 	renderer_context RendererContext = {0};
@@ -155,13 +155,13 @@ main(void)
 			{
 				if (Creating == SAND)
 				{
-					u32 Modifier = RandomU32InRange(&RandomSequence, 0x00, 0x33) << 8;
+					u32 Modifier = RandomU32InRange(0x00, 0x33) << 8;
 					Cell(LocationX, LocationY).Type = Creating;
 					Cell(LocationX, LocationY).Color = CellTypeColorTable[Creating] + Modifier;
 				}
 				else if (Creating == WOOD)
 				{
-					u32 Modifier = RandomU32InRange(&RandomSequence, 0x00, 0x22);
+					u32 Modifier = RandomU32InRange(0x00, 0x22);
 					Cell(LocationX, LocationY).Type = Creating;
 					Cell(LocationX, LocationY).Color = CellTypeColorTable[Creating] + Modifier;
 				}
@@ -176,8 +176,8 @@ main(void)
 							cell_type OriginalType = Cell(CellX, CellY).Type;
 							if (!OriginalType)
 							{
-								u32 Modifier = RandomU32InRange(&RandomSequence, 0x00, 0x33) << 8;
-								b32 Chance = RandomU32InRange(&RandomSequence, 0, 31) == 0;
+								u32 Modifier = RandomU32InRange(0x00, 0x33) << 8;
+								b32 Chance = RandomU32InRange(0, 31) == 0;
 								cell_type NewType = (cell_type)(Creating * Chance);
 								Cell(CellX, CellY).Type = NewType;
 								Cell(CellX, CellY).Color = CellTypeColorTable[NewType] + Modifier;

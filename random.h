@@ -12,11 +12,13 @@ struct random_sequence
 	u64 Selection;
 };
 
+static thread_local random_sequence RandomSequence = {0};
+
+// NOTE(ariel) Call SeedRandom() before any other function related to
+// psuedorandom number generation.
 static random_sequence
 SeedRandom(void)
 {
-	random_sequence RandomSequence = {0};
-
 	StaticAssert(sizeof(unsigned long long) == sizeof(u64));
 	_rdseed64_step((unsigned long long *)&RandomSequence.State);
 	RandomSequence.Selection = ((uintptr_t)SeedRandom << 1) | 1;
@@ -37,15 +39,15 @@ RotateRight(u32 Value, u32 Count)
 }
 
 static inline u32
-RandomU32(random_sequence *Sequence)
+RandomU32(void)
 {
 	const u64 CONSTANT_WITH_HIGH_EMPIRICAL_CONFIDENCE = 6364136223846793005ull;
 
 	// NOTE(ariel) This is an implementation of PCG-XSH-RR (permuted congruential
 	// generator, xorshift high bits, random rotate) based on Melissa O'Neill's
 	// paper and library.
-	u64 PreviousState = Sequence->State;
-	u64 NextState = PreviousState * CONSTANT_WITH_HIGH_EMPIRICAL_CONFIDENCE + Sequence->Selection;
+	u64 PreviousState = RandomSequence.State;
+	u64 NextState = PreviousState * CONSTANT_WITH_HIGH_EMPIRICAL_CONFIDENCE + RandomSequence.Selection;
 
 	// NOTE(ariel) Perform a xorshift to produce more statistically solid high
 	// bits, where top 5 bits of 32 bits specify shift, hence right shift 27, and
@@ -56,15 +58,15 @@ RandomU32(random_sequence *Sequence)
 	u32 Xorshift = (u32)(((PreviousState >> 18) ^ PreviousState) >> 27);
 	u32 Result = RotateRight(Xorshift, Rotate);
 
-	Sequence->State = NextState;
+	RandomSequence.State = NextState;
 	return Result;
 }
 
 static inline u32
-RandomU32InRange(random_sequence *Sequence, u32 Min, u32 Max)
+RandomU32InRange(u32 Min, u32 Max)
 {
 	Assert(Min < Max);
-	u32 Result = (RandomU32(Sequence) % ((Max + 1) - Min)) + Min;
+	u32 Result = (RandomU32() % ((Max + 1) - Min)) + Min;
 	Assert(Min <= Result);
 	Assert(Result <= Max);
 	return Result;
