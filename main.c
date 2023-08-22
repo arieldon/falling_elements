@@ -230,6 +230,8 @@ main(void)
 					s32 PixelX = X * CELL_SIZE;
 					Quads[QuadsCount].Y = PixelY;
 					Quads[QuadsCount].X = PixelX;
+					Quads[QuadsCount].Width = CELL_SIZE;
+					Quads[QuadsCount].Height = CELL_SIZE;
 					Quads[QuadsCount].Color = Cell(X, Y).Color;
 					QuadsCount += 1;
 				}
@@ -238,15 +240,16 @@ main(void)
 
 		for (s32 Index = 0; Index < MenuContext.CommandCount; Index += 1)
 		{
-			MenuQuads[MenuQuadsCount].Y = MenuContext.Commands[Index].Target.Y;
-			MenuQuads[MenuQuadsCount].X = MenuContext.Commands[Index].Target.X;
-			MenuQuads[MenuQuadsCount].Color = MenuContext.Commands[Index].Color;
-			MenuQuadsCount += 1;
+			Quads[QuadsCount].X = MenuContext.Commands[Index].X;
+			Quads[QuadsCount].Y = MenuContext.Commands[Index].Y;
+			Quads[QuadsCount].Width = MenuContext.Commands[Index].Width;
+			Quads[QuadsCount].Height = MenuContext.Commands[Index].Height;
+			Quads[QuadsCount].Color = MenuContext.Commands[Index].Color;
+			QuadsCount += 1;
 		}
 
-		PresentBuffer(RendererContext);
+		PresentBuffer();
 
-		MenuQuadsCount = 0;
 		QuadsCount = 0;
 		FrameCount += 1;
 

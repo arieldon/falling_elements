@@ -1,8 +1,5 @@
 static s32 QuadsCount;
-static quad Quads[ArrayCount(CellBuffer)];
-
-static s32 MenuQuadsCount;
-static quad MenuQuads[ArrayCount(MenuContext.Commands)];
+static quad Quads[ArrayCount(CellBuffer) + ArrayCount(MenuContext.Commands)];
 
 #ifdef DEBUG
 static void
@@ -64,27 +61,28 @@ InitializeRenderer(renderer_context *Context)
 #endif
 
 	// NOTE(ariel) Build and link shader program.
-	enum { BASE_POSITION = 0, INSTANCE_OFFSET = 1, INSTANCE_COLOR = 2 };
+	enum { BASE_POSITION = 0, INSTANCE_QUAD = 1, INSTANCE_COLOR = 2 };
 	{
 		const char *VertexShaderSource =
 			"#version 330 core\n"
 			"layout (location = 0) in vec2 BasePosition;\n"
-			"layout (location = 1) in vec2 InstanceOffset;\n"
+			"layout (location = 1) in vec4 InstanceQuad;\n"
 			"layout (location = 2) in vec4 InstanceColor;\n"
-			"uniform vec2 Scale;\n"
-			"uniform vec2 Window;\n"
+			"uniform vec2 WindowDimensions;\n"
 			"out vec4 ColorForFragmentShader;\n"
 			"void main()\n"
 			"{\n"
 			"	ColorForFragmentShader = InstanceColor;\n"
 			// NOTE(ariel) Scale and translate base.
-			"	vec2 Translation = InstanceOffset + Scale;\n"
+			"	vec2 Offset = InstanceQuad.xy;\n"
+			"	vec2 Scale = InstanceQuad.zw;\n"
+			"	vec2 Translation = Offset + Scale/2.0f;\n"
 			"	vec2 CellPosition = Scale*BasePosition + Translation;\n"
 			// NOTE(ariel) Split standard orthographic projection matrix into two
 			// matrices: first scale, second translate.
-			"	CellPosition.x *= 2.0f / Window.x;\n"
+			"	CellPosition.x *= 2.0f / WindowDimensions.x;\n"
 			"	CellPosition.x += -1.0f;\n"
-			"	CellPosition.y *= -2.0f / Window.y;\n"
+			"	CellPosition.y *= -2.0f / WindowDimensions.y;\n"
 			"	CellPosition.y += 1.0f;\n"
 			"	gl_Position = vec4(CellPosition, 0.0f, 1.0f);\n"
 			"}\n";
@@ -118,15 +116,13 @@ InitializeRenderer(renderer_context *Context)
 
 		glUseProgram(ShaderProgram);
 
-		GLint UniformScaleLocation = glGetUniformLocation(ShaderProgram, "Scale");
-		GLint UniformWindowLocation = glGetUniformLocation(ShaderProgram, "Window");
+		GLint UniformWindowLocation = glGetUniformLocation(ShaderProgram, "WindowDimensions"); Assert(UniformWindowLocation != -1);
 		glUniform2f(UniformWindowLocation, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 		glDeleteShader(FragmentShader);
 		glDeleteShader(VertexShader);
 
 		Context->ShaderProgram = ShaderProgram;
-		Context->UniformScaleLocation = UniformScaleLocation;
 	}
 
 	// NOTE(ariel) Allocate and load arrays on GPU.
@@ -137,13 +133,13 @@ InitializeRenderer(renderer_context *Context)
 
 		f32 BaseQuadVertices[] =
 		{
-			+1.0f, +1.0f,
-			+1.0f, -1.0f,
-			-1.0f, +1.0f,
+			+0.5f, +0.5f,
+			+0.5f, -0.5f,
+			-0.5f, +0.5f,
 
-			+1.0f, -1.0f,
-			-1.0f, -1.0f,
-			-1.0f, +1.0f,
+			+0.5f, -0.5f,
+			-0.5f, -0.5f,
+			-0.5f, +0.5f,
 		};
 		GLuint VerticesBuffer = 0;
 		glGenBuffers(1, &VerticesBuffer);
@@ -159,12 +155,12 @@ InitializeRenderer(renderer_context *Context)
 		glBindBuffer(GL_ARRAY_BUFFER, InstancesBuffer);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(Quads), 0, GL_STREAM_DRAW);
 
-		glEnableVertexAttribArray(INSTANCE_OFFSET);
-		glVertexAttribPointer(INSTANCE_OFFSET, 2, GL_INT, GL_FALSE, sizeof(Quads[0]), (void *)0);
-		glVertexAttribDivisor(INSTANCE_OFFSET, 1);
+		glEnableVertexAttribArray(INSTANCE_QUAD);
+		glVertexAttribPointer(INSTANCE_QUAD, 4, GL_INT, GL_FALSE, sizeof(Quads[0]), (void *)0);
+		glVertexAttribDivisor(INSTANCE_QUAD, 1);
 
 		glEnableVertexAttribArray(INSTANCE_COLOR);
-		glVertexAttribPointer(INSTANCE_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Quads[0]), (void *)(sizeof(s32) * 2));
+		glVertexAttribPointer(INSTANCE_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Quads[0]), (void *)(sizeof(s32) * 4));
 		glVertexAttribDivisor(INSTANCE_COLOR, 1);
 
 		Context->VertexArray = VertexArray;
@@ -185,20 +181,12 @@ TerminateRenderer(renderer_context Context)
 }
 
 static void
-PresentBuffer(renderer_context Context)
+PresentBuffer(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Quads[0]) * QuadsCount, Quads);
-	glUniform2f(Context.UniformScaleLocation, 4.0f, 4.0f);
 	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, QuadsCount);
-
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(MenuQuads[0]) * MenuQuadsCount, MenuQuads);
-	glUniform2f(Context.UniformScaleLocation, 16.0f, 16.0f);
-	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, MenuQuadsCount);
-
-	// TODO(ariel) Use vertical sync if it's available?
-	glXSwapBuffers(X11Display, X11Window);
+	glXSwapBuffers(X11Display, X11Window); // TODO(ariel) Use vertical sync if it's available?
 }
 
 static inline u64
