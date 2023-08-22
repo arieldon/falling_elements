@@ -1,6 +1,9 @@
 static s32 QuadsCount;
 static quad Quads[ArrayCount(CellBuffer)];
 
+static s32 MenuQuadsCount;
+static quad MenuQuads[ArrayCount(MenuContext.Commands)];
+
 #ifdef DEBUG
 static void
 OpenGLDebugMessageCallback(
@@ -68,17 +71,21 @@ InitializeRenderer(renderer_context *Context)
 			"layout (location = 0) in vec2 BasePosition;\n"
 			"layout (location = 1) in vec2 InstanceOffset;\n"
 			"layout (location = 2) in vec4 InstanceColor;\n"
+			"uniform vec2 Scale;\n"
+			"uniform vec2 Window;\n"
 			"out vec4 ColorForFragmentShader;\n"
 			"void main()\n"
 			"{\n"
 			"	ColorForFragmentShader = InstanceColor;\n"
-			"	vec2 CellPosition = BasePosition + InstanceOffset;\n"
+			// NOTE(ariel) Scale and translate base.
+			"	vec2 Translation = InstanceOffset + Scale;\n"
+			"	vec2 CellPosition = Scale*BasePosition + Translation;\n"
 			// NOTE(ariel) Split standard orthographic projection matrix into two
 			// matrices: first scale, second translate.
-			"	CellPosition.x *= 2.0f / 1920.0f;\n"
-			"	CellPosition.x += -1;\n"
-			"	CellPosition.y *= -2.0f / 1080.0f;\n"
-			"	CellPosition.y += 1;\n"
+			"	CellPosition.x *= 2.0f / Window.x;\n"
+			"	CellPosition.x += -1.0f;\n"
+			"	CellPosition.y *= -2.0f / Window.y;\n"
+			"	CellPosition.y += 1.0f;\n"
 			"	gl_Position = vec4(CellPosition, 0.0f, 1.0f);\n"
 			"}\n";
 		GLuint VertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -111,10 +118,15 @@ InitializeRenderer(renderer_context *Context)
 
 		glUseProgram(ShaderProgram);
 
+		GLint UniformScaleLocation = glGetUniformLocation(ShaderProgram, "Scale");
+		GLint UniformWindowLocation = glGetUniformLocation(ShaderProgram, "Window");
+		glUniform2f(UniformWindowLocation, WINDOW_WIDTH, WINDOW_HEIGHT);
+
 		glDeleteShader(FragmentShader);
 		glDeleteShader(VertexShader);
 
 		Context->ShaderProgram = ShaderProgram;
+		Context->UniformScaleLocation = UniformScaleLocation;
 	}
 
 	// NOTE(ariel) Allocate and load arrays on GPU.
@@ -125,13 +137,13 @@ InitializeRenderer(renderer_context *Context)
 
 		f32 BaseQuadVertices[] =
 		{
-			+4.0f, +4.0f,
-			+4.0f, -4.0f,
-			-4.0f, +4.0f,
+			+1.0f, +1.0f,
+			+1.0f, -1.0f,
+			-1.0f, +1.0f,
 
-			+4.0f, -4.0f,
-			-4.0f, -4.0f,
-			-4.0f, +4.0f,
+			+1.0f, -1.0f,
+			-1.0f, -1.0f,
+			-1.0f, +1.0f,
 		};
 		GLuint VerticesBuffer = 0;
 		glGenBuffers(1, &VerticesBuffer);
@@ -173,11 +185,19 @@ TerminateRenderer(renderer_context Context)
 }
 
 static void
-PresentBuffer(void)
+PresentBuffer(renderer_context Context)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
+
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Quads[0]) * QuadsCount, Quads);
+	glUniform2f(Context.UniformScaleLocation, 4.0f, 4.0f);
 	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, QuadsCount);
+
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(MenuQuads[0]) * MenuQuadsCount, MenuQuads);
+	glUniform2f(Context.UniformScaleLocation, 16.0f, 16.0f);
+	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, MenuQuadsCount);
+
+	// TODO(ariel) Use vertical sync if it's available?
 	glXSwapBuffers(X11Display, X11Window);
 }
 

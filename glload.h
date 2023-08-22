@@ -37,6 +37,7 @@ typedef void (APIENTRY *DEBUGPROC)(GLenum source, GLenum Type, GLuint Id, GLenum
 	GLE(void, GetShaderiv, GLuint shader, GLenum pname, GLint *params) \
 	GLE(void, LinkProgram, GLuint program) \
 	GLE(void, ShaderSource, GLuint shader, GLsizei count, const GLchar* const *string, const GLint *length) \
+	GLE(void, Uniform2f, GLint location, GLfloat v0, GLfloat v1) \
 	GLE(void, UniformMatrix4fv, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value) \
 	GLE(void, UseProgram, GLuint program) \
 	GLE(void, VertexAttribDivisor, GLuint index, GLuint divisor) \

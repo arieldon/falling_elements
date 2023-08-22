@@ -7,24 +7,23 @@
 #include <time.h>
 
 #include "base.h"
+#include "string.h"
+#include "random.h"
 #include "glload.h"
 #include "window.h"
 #include "renderer.h"
-#include "random.h"
 #include "automata.h"
+#include "menu.h"
 
 #include "window.c"
 #include "renderer.c"
 #include "automata.c"
+#include "menu.c"
 
 static b32 Running = true;
+static b32 ShouldClearScreen;
 
-enum { MAXIMUM_LOCATIONS_COUNT = 1<<4 };
-static s32 LocationsCount;
-static vector2s Locations[MAXIMUM_LOCATIONS_COUNT];
-static vector2s PreviousLocation;
-
-static cell_type Creating;
+static cell_type Creating = SAND;
 
 static inline b32
 IsInWindowSpace(vector2s Location)
@@ -54,41 +53,26 @@ HandleInput(void)
 				}
 				else if (Event->keycode == XKeysymToKeycode(X11Display, XK_space))
 				{
-					memset(CellBuffer, 0, sizeof(CellBuffer));
-					CreateBoundary();
+					ShouldClearScreen = true;
 				}
 				break;
 			}
 			case ButtonPress:
 			{
 				XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
-				switch (Event->button)
-				{
-					case Button1: Creating = SAND; break;
-					case Button2: Creating = WOOD; break;
-					case Button3: Creating = WATER; break;
-				}
-				PreviousLocation.X = Event->x;
-				PreviousLocation.Y = Event->y;
+				MenuInputMouseButtonPress(Event->x, Event->y);
 				break;
 			}
 			case ButtonRelease:
 			{
-				Creating = BLANK;
+				XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
+				MenuInputMouseButtonRelease(Event->x, Event->y);
 				break;
 			}
 			case MotionNotify:
 			{
 				XPointerMovedEvent *Event = (XPointerMovedEvent *)&GeneralEvent;
-				vector2s CellLocation = {0};
-				CellLocation.X = Event->x;
-				CellLocation.Y = Event->y;
-				if (IsInWindowSpace(CellLocation))
-				{
-					Assert(LocationsCount < MAXIMUM_LOCATIONS_COUNT);
-					Locations[LocationsCount++] = CellLocation;
-					PreviousLocation = CellLocation;
-				}
+				MenuInputMouseMove(Event->x, Event->y);
 				break;
 			}
 			case ClientMessage:
@@ -127,30 +111,38 @@ main(void)
 
 		HandleInput();
 
-		// NOTE(ariel) Map new input in window coordinates to cell space.
-		if (Creating)
 		{
-			for (s32 Index = 0; Index < LocationsCount - 1; Index += 1)
+			BeginMenu();
+
+			// TODO(ariel)
+			// - layout buttons automagically
+			// - button per user creatable cell type
+			// - button for eraser
+			// - button to clear screen
+			// - button to play/pause
+			// - hide menu by default and pop it out when cursor hovers near it
+			if (MenuButton(CellTypeColorTable[SAND], StringLiteral("Sand")))
 			{
-				vector2s Location = Locations[Index];
-
-				s32 CellY = Location.Y / CELL_SIZE;
-				s32 CellX = Location.X / CELL_SIZE;
-
-				Assert(CellY >= 0);
-				Assert(CellX >= 0);
-				Assert(CellY < Y_CELL_COUNT);
-				Assert(CellX < X_CELL_COUNT);
-
-				if (Cell(CellX, CellY).Type == BLANK)
-				{
-					Cell(CellX, CellY).Type = Creating;
-					Cell(CellX, CellY).Color = CellTypeColorTable[Creating];
-				}
+				Creating = SAND;
+			}
+			if (MenuButton(CellTypeColorTable[WATER], StringLiteral("Water")))
+			{
+				Creating = WATER;
+			}
+			if (MenuButton(CellTypeColorTable[WOOD], StringLiteral("Wood")))
+			{
+				Creating = WOOD;
 			}
 
-			s32 LocationY = PreviousLocation.Y / CELL_SIZE;
-			s32 LocationX = PreviousLocation.X / CELL_SIZE;
+			EndMenu();
+		}
+
+		// NOTE(ariel) Map new input in window coordinates to cell space.
+		// FIXME(ariel) Check bounds of mouse pointer location.
+		if (MenuContext.MouseDown && !MouseOverTarget(MenuContext.EntireMenu) && IsInWindowSpace(MenuContext.MousePosition))
+		{
+			s32 LocationY = MenuContext.MousePositionY / CELL_SIZE;
+			s32 LocationX = MenuContext.MousePositionX / CELL_SIZE;
 			if (Cell(LocationX, LocationY).Type == BLANK)
 			{
 				if (Creating == SAND)
@@ -188,12 +180,19 @@ main(void)
 			}
 		}
 
-		for (s32 Y = Y_CELL_COUNT-1; Y > CELL_START; Y -= 1)
+		if (ShouldClearScreen)
 		{
-			s32 Y0 = Y;
-			s32 Y1 = Y-1;
-			if (FrameCount & 1)
+			memset(CellBuffer, 0, sizeof(CellBuffer));
+			CreateBoundary();
+			ShouldClearScreen = false;
+		}
+
+		if (FrameCount & 1)
+		{
+			for (s32 Y = Y_CELL_COUNT-1; Y > CELL_START; Y -= 1)
 			{
+				s32 Y0 = Y;
+				s32 Y1 = Y-1;
 				for (s32 ReverseX = X_CELL_COUNT-1; ReverseX >= CELL_START; ReverseX -= 1)
 				{
 					TransitionCell(ReverseX, Y0);
@@ -203,8 +202,13 @@ main(void)
 					TransitionCell(ForwardX, Y1);
 				}
 			}
-			else
+		}
+		else
+		{
+			for (s32 Y = Y_CELL_COUNT-1; Y > CELL_START; Y -= 1)
 			{
+				s32 Y0 = Y;
+				s32 Y1 = Y-1;
 				for (s32 ForwardX = CELL_START; ForwardX < X_CELL_COUNT; ForwardX += 1)
 				{
 					TransitionCell(ForwardX, Y0);
@@ -232,10 +236,18 @@ main(void)
 			}
 		}
 
-		PresentBuffer();
+		for (s32 Index = 0; Index < MenuContext.CommandCount; Index += 1)
+		{
+			MenuQuads[MenuQuadsCount].Y = MenuContext.Commands[Index].Target.Y;
+			MenuQuads[MenuQuadsCount].X = MenuContext.Commands[Index].Target.X;
+			MenuQuads[MenuQuadsCount].Color = MenuContext.Commands[Index].Color;
+			MenuQuadsCount += 1;
+		}
 
+		PresentBuffer(RendererContext);
+
+		MenuQuadsCount = 0;
 		QuadsCount = 0;
-		LocationsCount = 0;
 		FrameCount += 1;
 
 		DeltaTime = CurrentTimestamp - PreviousTimestamp;
