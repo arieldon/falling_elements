@@ -86,3 +86,61 @@ CloseWindow(void)
 	XDestroyWindow(X11Display, X11Window);
 	XCloseDisplay(X11Display);
 }
+
+static void
+HandleInput(void)
+{
+	for (s32 Count = XPending(X11Display); Count > 0; Count -= 1)
+	{
+		XEvent GeneralEvent = {0};
+		XNextEvent(X11Display, &GeneralEvent);
+		switch (GeneralEvent.type)
+		{
+			case KeyPress:
+			{
+				XKeyPressedEvent *Event = (XKeyPressedEvent *)&GeneralEvent;
+				if (Event->keycode == XKeysymToKeycode(X11Display, XK_Escape))
+				{
+					Running = false;
+				}
+				else if (Event->keycode == XKeysymToKeycode(X11Display, XK_space))
+				{
+#if 1
+					ShouldClearScreen = true;
+#else
+					Playing ^= 1;
+#endif
+				}
+				break;
+			}
+			case ButtonPress:
+			{
+				XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
+				MenuInputMouseButtonPress(Event->x, Event->y);
+				break;
+			}
+			case ButtonRelease:
+			{
+				XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
+				MenuInputMouseButtonRelease(Event->x, Event->y);
+				break;
+			}
+			case MotionNotify:
+			{
+				XPointerMovedEvent *Event = (XPointerMovedEvent *)&GeneralEvent;
+				MenuInputMouseMove(Event->x, Event->y);
+				break;
+			}
+			case ClientMessage:
+			{
+				XClientMessageEvent *Event = (XClientMessageEvent *)&GeneralEvent;
+				Atom Protocol = Event->data.l[0];
+				if (Protocol == X11DeleteWindowEvent)
+				{
+					Running = false;
+				}
+				break;
+			}
+		}
+	}
+}

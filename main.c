@@ -15,15 +15,17 @@
 #include "automata.h"
 #include "menu.h"
 
+static b32 Running = true;
+static b32 Playing = true;
+static b32 ShouldClearScreen;
+
+static cell_type Creating = SAND;
+
 #include "window.c"
 #include "renderer.c"
 #include "automata.c"
 #include "menu.c"
 
-static b32 Running = true;
-static b32 ShouldClearScreen;
-
-static cell_type Creating = SAND;
 
 static inline b32
 IsInWindowSpace(vector2s Location)
@@ -35,58 +37,13 @@ IsInWindowSpace(vector2s Location)
 	return XMin & YMin & XMax & YMax;
 }
 
-static void
-HandleInput(void)
+static inline b32
+ShouldCreateCell(void)
 {
-	for (s32 Count = XPending(X11Display); Count > 0; Count -= 1)
-	{
-		XEvent GeneralEvent = {0};
-		XNextEvent(X11Display, &GeneralEvent);
-		switch (GeneralEvent.type)
-		{
-			case KeyPress:
-			{
-				XKeyPressedEvent *Event = (XKeyPressedEvent *)&GeneralEvent;
-				if (Event->keycode == XKeysymToKeycode(X11Display, XK_Escape))
-				{
-					Running = false;
-				}
-				else if (Event->keycode == XKeysymToKeycode(X11Display, XK_space))
-				{
-					ShouldClearScreen = true;
-				}
-				break;
-			}
-			case ButtonPress:
-			{
-				XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
-				MenuInputMouseButtonPress(Event->x, Event->y);
-				break;
-			}
-			case ButtonRelease:
-			{
-				XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
-				MenuInputMouseButtonRelease(Event->x, Event->y);
-				break;
-			}
-			case MotionNotify:
-			{
-				XPointerMovedEvent *Event = (XPointerMovedEvent *)&GeneralEvent;
-				MenuInputMouseMove(Event->x, Event->y);
-				break;
-			}
-			case ClientMessage:
-			{
-				XClientMessageEvent *Event = (XClientMessageEvent *)&GeneralEvent;
-				Atom Protocol = Event->data.l[0];
-				if (Protocol == X11DeleteWindowEvent)
-				{
-					Running = false;
-				}
-				break;
-			}
-		}
-	}
+	b32 MenuNotHot = !MouseOverTarget(MenuContext.EntireMenu);
+	b32 InWindowSpace = IsInWindowSpace(MenuContext.MousePosition);
+	b32 Result = MenuNotHot & InWindowSpace & MenuContext.MouseDown;
+	return Result;
 }
 
 int
@@ -115,12 +72,10 @@ main(void)
 			BeginMenu();
 
 			// TODO(ariel)
-			// - layout buttons automagically
-			// - button per user creatable cell type
-			// - button for eraser
-			// - button to clear screen
-			// - button to play/pause
-			// - hide menu by default and pop it out when cursor hovers near it
+			// - draw icons
+			//	- button to clear screen
+			// 	- button to play/pause
+			// - overlay checkmark or something on selected cell type
 			if (MenuButton(CellTypeColorTable[SAND], StringLiteral("Sand")))
 			{
 				Creating = SAND;
@@ -142,8 +97,7 @@ main(void)
 		}
 
 		// NOTE(ariel) Map new input in window coordinates to cell space.
-		// FIXME(ariel) Check bounds of mouse pointer location.
-		if (MenuContext.MouseDown && !MouseOverTarget(MenuContext.EntireMenu) && IsInWindowSpace(MenuContext.MousePosition))
+		if (ShouldCreateCell())
 		{
 			s32 LocationY = MenuContext.MousePositionY / CELL_SIZE;
 			s32 LocationX = MenuContext.MousePositionX / CELL_SIZE;
@@ -191,7 +145,7 @@ main(void)
 
 		if (ShouldClearScreen)
 		{
-			memset(CellBuffer, 0, sizeof(CellBuffer));
+			memset(CellBuffer, BLANK, sizeof(CellBuffer));
 			CreateBoundary();
 			ShouldClearScreen = false;
 		}

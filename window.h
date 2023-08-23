@@ -18,4 +18,6 @@ static Atom X11DeleteWindowEvent;
 static void OpenWindow(void);
 static void CloseWindow(void);
 
+static void HandleInput(void);
+
 #endif
