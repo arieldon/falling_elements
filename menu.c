@@ -5,7 +5,7 @@ BeginMenu(void)
 {
 	b32 HotMenu = MouseOverTarget(MenuContext.EntireMenu);
 	MenuContext.OffsetX = MenuContext.StartOffsetX = WINDOW_WIDTH - ICON_SIZE*HotMenu;
-	MenuContext.OffsetY = MenuContext.StartOffsetY = WINDOW_HEIGHT/2 - ICON_SIZE/2;
+	MenuContext.OffsetY = MenuContext.StartOffsetY = WINDOW_HEIGHT/2 - ICON_SIZE/2 - MenuContext.Height/2;
 	MenuContext.Width = 0;
 	MenuContext.Height = 0;
 	MenuContext.HotID = 0;
@@ -15,6 +15,13 @@ BeginMenu(void)
 static void
 EndMenu(void)
 {
+	// NOTE(ariel) Don't draw until after first frame because menu isn't centered
+	// properly yet.
+	if (MenuContext.StartOffsetY == WINDOW_HEIGHT/2 - ICON_SIZE/2)
+	{
+		MenuContext.CommandCount = 0;
+	}
+
 	MenuContext.PreviousMouseDown = MenuContext.MouseDown;
 
 	MenuContext.EntireMenu.X -= ICON_SIZE;
