@@ -47,6 +47,10 @@ static void MenuInputMouseMove(s32 X, s32 Y);
 static void MenuInputMouseButtonPress(s32 X, s32 Y);
 static void MenuInputMouseButtonRelease(s32 X, s32 Y);
 
+// TODO(ariel) Ideally, this function shouldn't be exposed. Any functionality
+// that needs this call should use it internally.
+static inline b32 MouseOverTarget(quad Target);
+
 #define MenuButton(IconColor, Label) MenuButtonID(__LINE__, IconColor, Label)
 
 #endif

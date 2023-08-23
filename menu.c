@@ -3,19 +3,26 @@ enum { ICON_SIZE = 32 };
 static void
 BeginMenu(void)
 {
-	// TODO(ariel) Draw white background for menu?
-	MenuContext.OffsetX = MenuContext.StartOffsetX = WINDOW_WIDTH - ICON_SIZE;
+	b32 HotMenu = MouseOverTarget(MenuContext.EntireMenu);
+	MenuContext.OffsetX = MenuContext.StartOffsetX = WINDOW_WIDTH - ICON_SIZE*HotMenu;
 	MenuContext.OffsetY = MenuContext.StartOffsetY = WINDOW_HEIGHT/2 - ICON_SIZE/2;
 	MenuContext.Width = 0;
 	MenuContext.Height = 0;
 	MenuContext.HotID = 0;
-	MenuContext.CommandCount = 0;
+	MenuContext.CommandCount = 1;
 }
 
 static void
 EndMenu(void)
 {
 	MenuContext.PreviousMouseDown = MenuContext.MouseDown;
+
+	MenuContext.EntireMenu.X -= ICON_SIZE;
+	MenuContext.EntireMenu.Y -= ICON_SIZE/2;
+	MenuContext.EntireMenu.Width += ICON_SIZE;
+	MenuContext.EntireMenu.Height += ICON_SIZE;
+	MenuContext.EntireMenu.Color = 0xffffffff;
+	MenuContext.Commands[0] = MenuContext.EntireMenu;
 }
 
 static void
@@ -56,15 +63,15 @@ MenuButtonID(u32 ID, u32 IconColor, string Label)
 	b32 Clicked = false;
 
 	quad Target = {0};
-	Target.X = MenuContext.OffsetX;
+	Target.X = MenuContext.OffsetX - ICON_SIZE/2;
 	Target.Y = MenuContext.OffsetY;
 	Target.Width = ICON_SIZE;
 	Target.Height = ICON_SIZE;
 	Target.Color = IconColor;
 
 	MenuContext.Width = Max(MenuContext.Width, Target.Width);
-	MenuContext.Height += ICON_SIZE;
-	MenuContext.OffsetY += ICON_SIZE;
+	MenuContext.Height += Target.Height;
+	MenuContext.OffsetY += Target.Height;
 
 	// NOTE(ariel) Hot means mouse over menu button. Active means holding mouse
 	// button over menu button. Clicked means user releases mouse button in this
