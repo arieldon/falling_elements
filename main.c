@@ -133,6 +133,10 @@ main(void)
 			{
 				Creating = WOOD;
 			}
+			if (MenuButton(0xbbbbbbbb, StringLiteral("Blank")))
+			{
+				Creating = BLANK;
+			}
 
 			EndMenu();
 		}
@@ -177,6 +181,11 @@ main(void)
 						}
 					}
 				}
+			}
+			else if (Creating == BLANK)
+			{
+				Cell(LocationX, LocationY).Type = Creating;
+				Cell(LocationX, LocationY).Color = CellTypeColorTable[Creating];
 			}
 		}
 
