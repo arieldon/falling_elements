@@ -5,27 +5,8 @@ enum
 };
 
 static void
-LoadIcons(void)
-{
-	// TODO(ariel) Include source of image directly in header file.
-	u8 Buffer[16445] = {0};
-
-	FILE *IconsFile = fopen("./assets/atlas.pgm", "r");
-	Assert(IconsFile);
-
-	u64 ReadSuccess = fread(Buffer, 16445, 1, IconsFile);
-	Assert(ReadSuccess == 1);
-	Assert(Buffer[0] == 'P' && Buffer[1] == '5');
-	fclose(IconsFile);
-
-	memcpy(MenuContext.Icons, &Buffer[61], 16384);
-	MenuContext.LoadedIcons = true;
-}
-
-static void
 BeginMenu(void)
 {
-	Assert(MenuContext.LoadedIcons);
 	b32 HotMenu = MouseOverTarget(MenuContext.EntireMenu);
 	MenuContext.OffsetX = MenuContext.StartOffsetX = WINDOW_WIDTH - ICON_SIZE*HotMenu;
 	MenuContext.OffsetY = MenuContext.StartOffsetY = WINDOW_HEIGHT/2 - (ICON_SIZE+PADDING)/2 - MenuContext.Height/2;

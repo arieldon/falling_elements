@@ -1,6 +1,8 @@
 #ifndef MENU_H
 #define MENU_H
 
+#include "icons.inl"
+
 typedef enum menu_icon menu_icon;
 enum menu_icon
 {
@@ -43,9 +45,6 @@ struct menu_context
 
 	u32 HotID;
 	u32 ActiveID;
-
-	b32 LoadedIcons;
-	u8 Icons[16384];
 
 	s32 CommandCount;
 	quad Commands[64];

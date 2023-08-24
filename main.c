@@ -51,10 +51,6 @@ main(void)
 {
 	SeedRandom();
 
-	// FIXME(ariel) Ideally this will not be necessary to call out here before
-	// renderer initialization.
-	LoadIcons();
-
 	OpenWindow();
 	renderer_context RendererContext = {0};
 	InitializeRenderer(&RendererContext);
