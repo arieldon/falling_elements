@@ -19,12 +19,14 @@ struct quad
 	s32 Width;
 	s32 Height;
 	u32 Color;
+	u8 TextureID;
 };
 
 typedef struct renderer_context renderer_context;
 struct renderer_context
 {
 	GLuint ShaderProgram;
+	GLuint Texture;
 	GLuint VertexArray;
 	GLuint InstancesBuffer;
 	GLuint BaseVerticesBuffer;

@@ -1,11 +1,34 @@
-enum { ICON_SIZE = 32 };
+enum
+{
+	ICON_SIZE = 24,
+	PADDING = 8,
+};
+
+static void
+LoadIcons(void)
+{
+	// TODO(ariel) Include source of image directly in header file.
+	u8 Buffer[16445] = {0};
+
+	FILE *IconsFile = fopen("./assets/atlas.pgm", "r");
+	Assert(IconsFile);
+
+	u64 ReadSuccess = fread(Buffer, 16445, 1, IconsFile);
+	Assert(ReadSuccess == 1);
+	Assert(Buffer[0] == 'P' && Buffer[1] == '5');
+	fclose(IconsFile);
+
+	memcpy(MenuContext.Icons, &Buffer[61], 16384);
+	MenuContext.LoadedIcons = true;
+}
 
 static void
 BeginMenu(void)
 {
+	Assert(MenuContext.LoadedIcons);
 	b32 HotMenu = MouseOverTarget(MenuContext.EntireMenu);
 	MenuContext.OffsetX = MenuContext.StartOffsetX = WINDOW_WIDTH - ICON_SIZE*HotMenu;
-	MenuContext.OffsetY = MenuContext.StartOffsetY = WINDOW_HEIGHT/2 - ICON_SIZE/2 - MenuContext.Height/2;
+	MenuContext.OffsetY = MenuContext.StartOffsetY = WINDOW_HEIGHT/2 - (ICON_SIZE+PADDING)/2 - MenuContext.Height/2;
 	MenuContext.Width = 0;
 	MenuContext.Height = 0;
 	MenuContext.HotID = 0;
@@ -25,10 +48,11 @@ EndMenu(void)
 	MenuContext.PreviousMouseDown = MenuContext.MouseDown;
 
 	MenuContext.EntireMenu.X -= ICON_SIZE;
-	MenuContext.EntireMenu.Y -= ICON_SIZE/2;
+	MenuContext.EntireMenu.Y -= ICON_SIZE / 2;
 	MenuContext.EntireMenu.Width += ICON_SIZE;
 	MenuContext.EntireMenu.Height += ICON_SIZE;
 	MenuContext.EntireMenu.Color = 0xffffffff;
+	MenuContext.EntireMenu.TextureID = MENU_ICON_BLANK;
 	MenuContext.Commands[0] = MenuContext.EntireMenu;
 }
 
@@ -65,7 +89,7 @@ MouseOverTarget(quad Target)
 }
 
 static b32
-MenuButtonID(u32 ID, u32 IconColor, string Label)
+MenuButtonID(u32 ID, menu_icon Icon, u32 IconColor, string Label)
 {
 	b32 Clicked = false;
 
@@ -75,10 +99,11 @@ MenuButtonID(u32 ID, u32 IconColor, string Label)
 	Target.Width = ICON_SIZE;
 	Target.Height = ICON_SIZE;
 	Target.Color = IconColor;
+	Target.TextureID = Icon;
 
 	MenuContext.Width = Max(MenuContext.Width, Target.Width);
-	MenuContext.Height += Target.Height;
-	MenuContext.OffsetY += Target.Height;
+	MenuContext.Height += Target.Height + PADDING;
+	MenuContext.OffsetY += Target.Height + PADDING;
 
 	// NOTE(ariel) Hot means mouse over menu button. Active means holding mouse
 	// button over menu button. Clicked means user releases mouse button in this
@@ -86,11 +111,11 @@ MenuButtonID(u32 ID, u32 IconColor, string Label)
 	if (MouseOverTarget(Target))
 	{
 		// TODO(ariel) Display label if hot.
-		Target.Color += 0x11111100;
+		Target.Color -= 0x11000000;
 		MenuContext.HotID = ID;
 		if (MenuContext.MouseDown)
 		{
-			Target.Color += 0x22222200;
+			Target.Color -= 0x22000000;
 			MenuContext.ActiveID = ID;
 		}
 		else if (MenuContext.PreviousMouseDown)

@@ -51,6 +51,10 @@ main(void)
 {
 	SeedRandom();
 
+	// FIXME(ariel) Ideally this will not be necessary to call out here before
+	// renderer initialization.
+	LoadIcons();
+
 	OpenWindow();
 	renderer_context RendererContext = {0};
 	InitializeRenderer(&RendererContext);
@@ -72,25 +76,30 @@ main(void)
 			BeginMenu();
 
 			// TODO(ariel)
-			// - draw icons
-			//	- button to clear screen
-			// 	- button to play/pause
 			// - overlay checkmark or something on selected cell type
-			if (MenuButton(CellTypeColorTable[SAND], StringLiteral("Sand")))
+			if (MenuButton(MENU_ICON_BLANK, CellTypeColorTable[SAND], StringLiteral("Sand")))
 			{
 				Creating = SAND;
 			}
-			if (MenuButton(CellTypeColorTable[WATER], StringLiteral("Water")))
+			if (MenuButton(MENU_ICON_BLANK, CellTypeColorTable[WATER], StringLiteral("Water")))
 			{
 				Creating = WATER;
 			}
-			if (MenuButton(CellTypeColorTable[WOOD], StringLiteral("Wood")))
+			if (MenuButton(MENU_ICON_BLANK, CellTypeColorTable[WOOD], StringLiteral("Wood")))
 			{
 				Creating = WOOD;
 			}
-			if (MenuButton(0xbbbbbbbb, StringLiteral("Blank")))
+			if (MenuButton(MENU_ICON_BLANK, 0xff000000, StringLiteral("Blank")))
 			{
 				Creating = BLANK;
+			}
+			if (MenuButton(MENU_ICON_CLEAR, 0xff000000, StringLiteral("Clear")))
+			{
+				ShouldClearScreen = true;
+			}
+			if (Playing ? MenuButton(MENU_ICON_PAUSE, 0xff333333, StringLiteral("Pause")) : MenuButton(MENU_ICON_PLAY, 0xff333333, StringLiteral("Play")))
+			{
+				Playing ^= 1;
 			}
 
 			EndMenu();
@@ -196,6 +205,7 @@ main(void)
 					Quads[QuadsCount].Width = CELL_SIZE;
 					Quads[QuadsCount].Height = CELL_SIZE;
 					Quads[QuadsCount].Color = Cell(X, Y).Color;
+					Quads[QuadsCount].TextureID = MENU_ICON_BLANK;
 					QuadsCount += 1;
 				}
 			}
@@ -203,11 +213,7 @@ main(void)
 
 		for (s32 Index = 0; Index < MenuContext.CommandCount; Index += 1)
 		{
-			Quads[QuadsCount].X = MenuContext.Commands[Index].X;
-			Quads[QuadsCount].Y = MenuContext.Commands[Index].Y;
-			Quads[QuadsCount].Width = MenuContext.Commands[Index].Width;
-			Quads[QuadsCount].Height = MenuContext.Commands[Index].Height;
-			Quads[QuadsCount].Color = MenuContext.Commands[Index].Color;
+			Quads[QuadsCount] = MenuContext.Commands[Index];
 			QuadsCount += 1;
 		}
 

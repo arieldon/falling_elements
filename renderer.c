@@ -6,14 +6,14 @@ static void
 OpenGLDebugMessageCallback(
 	GLenum Source,
 	GLenum Type,
-	GLuint Id,
+	GLuint ID,
 	GLenum Severity,
 	GLsizei Length,
 	const GLchar *Message,
 	const void *UserParam)
 {
 	(void)Source;
-	(void)Id;
+	(void)ID;
 	(void)Severity;
 	(void)Length;
 	(void)UserParam;
@@ -35,10 +35,11 @@ InitializeRenderer(renderer_context *Context)
 
 	// NOTE(ariel) Set global state of OpenGL context.
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-	glDisable(GL_BLEND);
 	glDisable(GL_SCISSOR_TEST);
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 #ifdef DEBUG
 	{
@@ -61,17 +62,29 @@ InitializeRenderer(renderer_context *Context)
 #endif
 
 	// NOTE(ariel) Build and link shader program.
-	enum { BASE_POSITION = 0, INSTANCE_QUAD = 1, INSTANCE_COLOR = 2 };
+	enum
+	{
+		BASE_POSITION = 0,
+		BASE_TEXTURE_COORDINATES = 1,
+		INSTANCE_QUAD = 2,
+		INSTANCE_COLOR = 3,
+		INSTANCE_TEXTURE_ID = 4,
+	};
 	{
 		const char *VertexShaderSource =
 			"#version 330 core\n"
-			"layout (location = 0) in vec2 BasePosition;\n"
-			"layout (location = 1) in vec4 InstanceQuad;\n"
-			"layout (location = 2) in vec4 InstanceColor;\n"
 			"uniform vec2 WindowDimensions;\n"
+			// NOTE(ariel) These locations _must_ match definition of enum above.
+			"layout (location = 0) in vec2 BasePosition;\n"
+			"layout (location = 1) in vec2 BaseTextureCoordinates;\n"
+			"layout (location = 2) in vec4 InstanceQuad;\n"
+			"layout (location = 3) in vec4 InstanceColor;\n"
+			"layout (location = 4) in float InstanceTextureID;\n"
+			"out vec2 UVCoordinatesForFragmentShader;\n"
 			"out vec4 ColorForFragmentShader;\n"
 			"void main()\n"
 			"{\n"
+			"	UVCoordinatesForFragmentShader = vec2(0.25f*InstanceTextureID, 0.0f) + 0.25f*BaseTextureCoordinates;\n"
 			"	ColorForFragmentShader = InstanceColor;\n"
 			// NOTE(ariel) Scale and translate base.
 			"	vec2 Offset = InstanceQuad.xy;\n"
@@ -79,7 +92,7 @@ InitializeRenderer(renderer_context *Context)
 			"	vec2 Translation = Offset + Scale/2.0f;\n"
 			"	vec2 CellPosition = Scale*BasePosition + Translation;\n"
 			// NOTE(ariel) Split standard orthographic projection matrix into two
-			// matrices: first scale, second translate.
+			// transforms: first scale, second translate.
 			"	CellPosition.x *= 2.0f / WindowDimensions.x;\n"
 			"	CellPosition.x += -1.0f;\n"
 			"	CellPosition.y *= -2.0f / WindowDimensions.y;\n"
@@ -92,11 +105,13 @@ InitializeRenderer(renderer_context *Context)
 
 		const char *FragmentShaderSource =
 			"#version 330 core\n"
+			"uniform sampler2D Icons;\n"
+			"in vec2 UVCoordinatesForFragmentShader;\n"
 			"in vec4 ColorForFragmentShader;\n"
 			"out vec4 OutputColor;\n"
 			"void main()\n"
 			"{\n"
-			"	OutputColor = ColorForFragmentShader;\n"
+			"	OutputColor = texture(Icons, UVCoordinatesForFragmentShader).r * ColorForFragmentShader;\n"
 			"}\n";
 		GLuint FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 		glShaderSource(FragmentShader, 1, &FragmentShaderSource, 0);
@@ -131,15 +146,25 @@ InitializeRenderer(renderer_context *Context)
 		glGenVertexArrays(1, &VertexArray);
 		glBindVertexArray(VertexArray);
 
+		GLuint Texture = 0;
+		glActiveTexture(GL_TEXTURE0);
+		glGenTextures(1, &Texture);
+		glBindTexture(GL_TEXTURE_2D, Texture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 128, 128, 0, GL_RED, GL_UNSIGNED_BYTE, MenuContext.Icons);
+
 		f32 BaseQuadVertices[] =
 		{
-			+0.5f, +0.5f,
-			+0.5f, -0.5f,
-			-0.5f, +0.5f,
+			+0.5f, +0.5f, +1.0f, +1.0f,
+			+0.5f, -0.5f, +1.0f, +0.0f,
+			-0.5f, +0.5f, +0.0f, +1.0f,
 
-			+0.5f, -0.5f,
-			-0.5f, -0.5f,
-			-0.5f, +0.5f,
+			+0.5f, -0.5f, +1.0f, +0.0f,
+			-0.5f, -0.5f, +0.0f, +0.0f,
+			-0.5f, +0.5f, +0.0f, +1.0f,
 		};
 		GLuint VerticesBuffer = 0;
 		glGenBuffers(1, &VerticesBuffer);
@@ -147,8 +172,12 @@ InitializeRenderer(renderer_context *Context)
 		glBufferData(GL_ARRAY_BUFFER, sizeof(BaseQuadVertices), BaseQuadVertices, GL_STATIC_DRAW);
 
 		glEnableVertexAttribArray(BASE_POSITION);
-		glVertexAttribPointer(BASE_POSITION, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(BASE_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(f32) * 4, 0);
 		glVertexAttribDivisor(BASE_POSITION, 0);
+
+		glEnableVertexAttribArray(BASE_TEXTURE_COORDINATES);
+		glVertexAttribPointer(BASE_TEXTURE_COORDINATES, 2, GL_FLOAT, GL_FALSE, sizeof(f32) * 4, (void *)(sizeof(f32) * 2));
+		glVertexAttribDivisor(BASE_TEXTURE_COORDINATES, 0);
 
 		GLuint InstancesBuffer = 0;
 		glGenBuffers(1, &InstancesBuffer);
@@ -156,13 +185,21 @@ InitializeRenderer(renderer_context *Context)
 		glBufferData(GL_ARRAY_BUFFER, sizeof(Quads), 0, GL_STREAM_DRAW);
 
 		glEnableVertexAttribArray(INSTANCE_QUAD);
-		glVertexAttribPointer(INSTANCE_QUAD, 4, GL_INT, GL_FALSE, sizeof(Quads[0]), (void *)0);
+		glVertexAttribPointer(INSTANCE_QUAD, 4, GL_INT, GL_FALSE,
+			sizeof(quad), (void *)0);
 		glVertexAttribDivisor(INSTANCE_QUAD, 1);
 
 		glEnableVertexAttribArray(INSTANCE_COLOR);
-		glVertexAttribPointer(INSTANCE_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Quads[0]), (void *)(sizeof(s32) * 4));
+		glVertexAttribPointer(INSTANCE_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE,
+			sizeof(quad), (void *)offsetof(quad, Color));
 		glVertexAttribDivisor(INSTANCE_COLOR, 1);
 
+		glEnableVertexAttribArray(INSTANCE_TEXTURE_ID);
+		glVertexAttribPointer(INSTANCE_TEXTURE_ID, 1, GL_UNSIGNED_BYTE, GL_FALSE,
+			sizeof(quad), (void *)offsetof(quad, TextureID));
+		glVertexAttribDivisor(INSTANCE_TEXTURE_ID, 1);
+
+		Context->Texture = Texture;
 		Context->VertexArray = VertexArray;
 		Context->InstancesBuffer = InstancesBuffer;
 		Context->BaseVerticesBuffer = VerticesBuffer;
@@ -175,6 +212,7 @@ static void
 TerminateRenderer(renderer_context Context)
 {
 	glDeleteProgram(Context.ShaderProgram);
+	glDeleteTextures(1, &Context.Texture);
 	glDeleteBuffers(1, &Context.InstancesBuffer);
 	glDeleteBuffers(1, &Context.BaseVerticesBuffer);
 	glDeleteVertexArrays(1, &Context.VertexArray);
