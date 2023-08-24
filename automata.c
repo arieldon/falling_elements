@@ -3,7 +3,7 @@ u32 CellTypeColorTable[CELL_TYPE_COUNT] =
 	[BLANK] = 0x00000000,
 	[WATER] = 0xffcc0000,
 	[SAND] = 0xff00ccff,
-	[WOOD] = 0xff293136,
+	[WOOD] = 0xff38495c,
 	[HOLY_BOUNDARY] = 0xffffffff,
 };
 
