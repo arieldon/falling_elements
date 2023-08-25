@@ -60,7 +60,7 @@ main(void)
 	u64 PreviousTimestamp = 0;
 	u64 DeltaTime = 0;
 
-	CreateBoundary();
+	BoundCells();
 
 	while (Running)
 	{
@@ -104,8 +104,8 @@ main(void)
 		// NOTE(ariel) Map new input in window coordinates to cell space.
 		if (ShouldCreateCell())
 		{
-			s32 LocationY = MenuContext.MousePositionY / CELL_SIZE;
-			s32 LocationX = MenuContext.MousePositionX / CELL_SIZE;
+			s32 LocationY = MenuContext.MousePositionY / CELL_SIZE + CELL_START;
+			s32 LocationX = MenuContext.MousePositionX / CELL_SIZE + CELL_START;
 			if (Cell(LocationX, LocationY).Type == BLANK)
 			{
 				if (Creating == SAND)
@@ -151,7 +151,7 @@ main(void)
 		if (ShouldClearScreen)
 		{
 			memset(CellBuffer, BLANK, sizeof(CellBuffer));
-			CreateBoundary();
+			BoundCells();
 			ShouldClearScreen = false;
 		}
 
@@ -159,15 +159,15 @@ main(void)
 		{
 			if (FrameCount & 1)
 			{
-				for (s32 Y = Y_CELL_COUNT-1; Y > CELL_START; Y -= 1)
+				for (s32 Y = Y_CELL_COUNT; Y >= CELL_START; Y -= 1)
 				{
 					s32 Y0 = Y;
 					s32 Y1 = Y-1;
-					for (s32 ReverseX = X_CELL_COUNT-1; ReverseX >= CELL_START; ReverseX -= 1)
+					for (s32 ReverseX = X_CELL_COUNT; ReverseX >= CELL_START; ReverseX -= 1)
 					{
 						TransitionCell(ReverseX, Y0);
 					}
-					for (s32 ForwardX = CELL_START; ForwardX < X_CELL_COUNT; ForwardX += 1)
+					for (s32 ForwardX = CELL_START; ForwardX <= X_CELL_COUNT; ForwardX += 1)
 					{
 						TransitionCell(ForwardX, Y1);
 					}
@@ -175,15 +175,15 @@ main(void)
 			}
 			else
 			{
-				for (s32 Y = Y_CELL_COUNT-1; Y > CELL_START; Y -= 1)
+				for (s32 Y = Y_CELL_COUNT; Y >= CELL_START; Y -= 1)
 				{
 					s32 Y0 = Y;
 					s32 Y1 = Y-1;
-					for (s32 ForwardX = CELL_START; ForwardX < X_CELL_COUNT; ForwardX += 1)
+					for (s32 ForwardX = CELL_START; ForwardX <= X_CELL_COUNT; ForwardX += 1)
 					{
 						TransitionCell(ForwardX, Y0);
 					}
-					for (s32 ReverseX = X_CELL_COUNT-1; ReverseX >= CELL_START; ReverseX -= 1)
+					for (s32 ReverseX = X_CELL_COUNT; ReverseX >= CELL_START; ReverseX -= 1)
 					{
 						TransitionCell(ReverseX, Y1);
 					}
@@ -191,14 +191,14 @@ main(void)
 			}
 		}
 
-		for (s32 Y = CELL_START; Y < Y_CELL_COUNT; Y += 1)
+		for (s32 Y = CELL_START; Y <= Y_CELL_COUNT; Y += 1)
 		{
-			for (s32 X = CELL_START; X < X_CELL_COUNT; X += 1)
+			for (s32 X = CELL_START; X <= X_CELL_COUNT; X += 1)
 			{
 				if (Cell(X, Y).Type != BLANK)
 				{
-					s32 PixelY = Y * CELL_SIZE;
-					s32 PixelX = X * CELL_SIZE;
+					s32 PixelY = (Y-CELL_START) * CELL_SIZE;
+					s32 PixelX = (X-CELL_START) * CELL_SIZE;
 					Quads[QuadsCount].Y = PixelY;
 					Quads[QuadsCount].X = PixelX;
 					Quads[QuadsCount].Width = CELL_SIZE;

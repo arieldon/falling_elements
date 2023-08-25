@@ -57,20 +57,20 @@ TransitionSandCell(s32 X, s32 Y)
 }
 
 static void
-CreateBoundary(void)
+BoundCells(void)
 {
-	for (s32 X = 0; X < X_CELL_COUNT; X += 1)
+	for (s32 X = 0; X < X_CELL_COUNT_WITH_PADDING; X += 1)
 	{
 		Cell(X, 0).Type = HOLY_BOUNDARY;
 		Cell(X, 0).Color = CellTypeColorTable[HOLY_BOUNDARY];
-		Cell(X, Y_CELL_COUNT).Type = HOLY_BOUNDARY;
-		Cell(X, Y_CELL_COUNT).Color = CellTypeColorTable[HOLY_BOUNDARY];
+		Cell(X, Y_CELL_COUNT+1).Type = HOLY_BOUNDARY;
+		Cell(X, Y_CELL_COUNT+1).Color = CellTypeColorTable[HOLY_BOUNDARY];
 	}
-	for (s32 Y = 0; Y < Y_CELL_COUNT; Y += 1)
+	for (s32 Y = 0; Y < Y_CELL_COUNT_WITH_PADDING; Y += 1)
 	{
 		Cell(0, Y).Type = HOLY_BOUNDARY;
 		Cell(0, Y).Color = CellTypeColorTable[HOLY_BOUNDARY];
-		Cell(X_CELL_COUNT, Y).Type = HOLY_BOUNDARY;
-		Cell(X_CELL_COUNT, Y).Color = CellTypeColorTable[HOLY_BOUNDARY];
+		Cell(X_CELL_COUNT+1, Y).Type = HOLY_BOUNDARY;
+		Cell(X_CELL_COUNT+1, Y).Color = CellTypeColorTable[HOLY_BOUNDARY];
 	}
 }

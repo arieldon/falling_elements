@@ -7,6 +7,8 @@ enum
 	CELL_START = 1,
 	Y_CELL_COUNT = WINDOW_HEIGHT / CELL_SIZE,
 	X_CELL_COUNT = WINDOW_WIDTH / CELL_SIZE,
+	Y_CELL_COUNT_WITH_PADDING = Y_CELL_COUNT + 2,
+	X_CELL_COUNT_WITH_PADDING = X_CELL_COUNT + 2,
 };
 
 typedef enum cell_type cell_type;
@@ -29,9 +31,9 @@ struct cell
 	cell_type Type;
 };
 
-static cell CellBuffer[(Y_CELL_COUNT+1) * (X_CELL_COUNT+1)];
+static cell CellBuffer[Y_CELL_COUNT_WITH_PADDING * X_CELL_COUNT_WITH_PADDING];
 
-#define Cell(X, Y) CellBuffer[(X_CELL_COUNT)*(Y) + (X)]
+#define Cell(X, Y) CellBuffer[(X_CELL_COUNT_WITH_PADDING)*(Y) + (X)]
 
 static void TransitionCell(s32 X, s32 Y);
 static void TransitionWaterCell(s32 X, s32 Y);
