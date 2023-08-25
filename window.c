@@ -103,14 +103,6 @@ HandleInput(void)
 				{
 					Running = false;
 				}
-				else if (Event->keycode == XKeysymToKeycode(X11Display, XK_space))
-				{
-#if 1
-					ShouldClearScreen = true;
-#else
-					Playing ^= 1;
-#endif
-				}
 				break;
 			}
 			case ButtonPress:
