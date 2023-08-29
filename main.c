@@ -155,38 +155,35 @@ main(void)
 			ShouldClearScreen = false;
 		}
 
-		if (Playing)
+		if (FrameCount & 1)
 		{
-			if (FrameCount & 1)
+			for (s32 Y = Playing*Y_CELL_COUNT; Y >= CELL_START; Y -= 1)
 			{
-				for (s32 Y = Y_CELL_COUNT; Y >= CELL_START; Y -= 1)
+				s32 Y0 = Y;
+				s32 Y1 = Y-1;
+				for (s32 ReverseX = X_CELL_COUNT; ReverseX >= CELL_START; ReverseX -= 1)
 				{
-					s32 Y0 = Y;
-					s32 Y1 = Y-1;
-					for (s32 ReverseX = X_CELL_COUNT; ReverseX >= CELL_START; ReverseX -= 1)
-					{
-						TransitionCell(ReverseX, Y0);
-					}
-					for (s32 ForwardX = CELL_START; ForwardX <= X_CELL_COUNT; ForwardX += 1)
-					{
-						TransitionCell(ForwardX, Y1);
-					}
+					TransitionCell(ReverseX, Y0);
+				}
+				for (s32 ForwardX = CELL_START; ForwardX <= X_CELL_COUNT; ForwardX += 1)
+				{
+					TransitionCell(ForwardX, Y1);
 				}
 			}
-			else
+		}
+		else
+		{
+			for (s32 Y = Playing*Y_CELL_COUNT; Y >= CELL_START; Y -= 1)
 			{
-				for (s32 Y = Y_CELL_COUNT; Y >= CELL_START; Y -= 1)
+				s32 Y0 = Y;
+				s32 Y1 = Y-1;
+				for (s32 ForwardX = CELL_START; ForwardX <= X_CELL_COUNT; ForwardX += 1)
 				{
-					s32 Y0 = Y;
-					s32 Y1 = Y-1;
-					for (s32 ForwardX = CELL_START; ForwardX <= X_CELL_COUNT; ForwardX += 1)
-					{
-						TransitionCell(ForwardX, Y0);
-					}
-					for (s32 ReverseX = X_CELL_COUNT; ReverseX >= CELL_START; ReverseX -= 1)
-					{
-						TransitionCell(ReverseX, Y1);
-					}
+					TransitionCell(ForwardX, Y0);
+				}
+				for (s32 ReverseX = X_CELL_COUNT; ReverseX >= CELL_START; ReverseX -= 1)
+				{
+					TransitionCell(ReverseX, Y1);
 				}
 			}
 		}
