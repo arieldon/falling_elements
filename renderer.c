@@ -86,7 +86,8 @@ InitializeRenderer(renderer_context *Context)
 			"{\n"
 			"	UVCoordinatesForFragmentShader = vec2(0.25f*InstanceTextureID, 0.0f) + 0.25f*BaseTextureCoordinates;\n"
 			"	ColorForFragmentShader = InstanceColor;\n"
-			// NOTE(ariel) Scale and translate base.
+			// NOTE(ariel) Scale and translate base, where scale sets correct size
+			// and translation sets top-left corner of quad as origin.
 			"	vec2 Offset = InstanceQuad.xy;\n"
 			"	vec2 Scale = InstanceQuad.zw;\n"
 			"	vec2 Translation = Offset + Scale/2.0f;\n"
