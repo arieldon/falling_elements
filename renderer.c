@@ -71,6 +71,8 @@ InitializeRenderer(renderer_context *Context)
 		INSTANCE_TEXTURE_ID = 4,
 	};
 	{
+		GLint CompileStatus = 0;
+
 		const char *VertexShaderSource =
 			"#version 330 core\n"
 			"uniform vec2 WindowDimensions;\n"
@@ -103,6 +105,15 @@ InitializeRenderer(renderer_context *Context)
 		GLuint VertexShader = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(VertexShader, 1, &VertexShaderSource, 0);
 		glCompileShader(VertexShader);
+		glGetShaderiv(VertexShader, GL_COMPILE_STATUS, &CompileStatus); // Assert(CompileStatus);
+		if (!CompileStatus)
+		{
+			s32 Length = 0;
+			char Buffer[1024] = {0};
+			glGetShaderInfoLog(VertexShader, sizeof(Buffer), &Length, Buffer);
+			fprintf(stderr, "%.*s\n", Length, Buffer);
+			Assert(!"UNREACHABLE");
+		}
 
 		const char *FragmentShaderSource =
 			"#version 330 core\n"
@@ -117,10 +128,15 @@ InitializeRenderer(renderer_context *Context)
 		GLuint FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 		glShaderSource(FragmentShader, 1, &FragmentShaderSource, 0);
 		glCompileShader(FragmentShader);
-
-		GLint CompileStatus = 0;
-		glGetShaderiv(VertexShader, GL_COMPILE_STATUS, &CompileStatus); Assert(CompileStatus);
-		glGetShaderiv(FragmentShader, GL_COMPILE_STATUS, &CompileStatus); Assert(CompileStatus);
+		glGetShaderiv(FragmentShader, GL_COMPILE_STATUS, &CompileStatus); // Assert(CompileStatus);
+		if (!CompileStatus)
+		{
+			s32 Length = 0;
+			char Buffer[1024] = {0};
+			glGetShaderInfoLog(FragmentShader, sizeof(Buffer), &Length, Buffer);
+			fprintf(stderr, "%.*s\n", Length, Buffer);
+			Assert(!"UNREACHABLE");
+		}
 
 		GLuint ShaderProgram = glCreateProgram();
 		glAttachShader(ShaderProgram, VertexShader);

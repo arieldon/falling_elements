@@ -34,6 +34,7 @@ typedef void (APIENTRY *DEBUGPROC)(GLenum source, GLenum Type, GLuint Id, GLenum
 	GLE(void, GenBuffers, GLsizei n, GLuint *buffers) \
 	GLE(void, GenVertexArrays, GLsizei n, GLuint *arrays) \
 	GLE(void, GetProgramiv, GLuint program, GLenum pname, GLint *params) \
+	GLE(void, GetShaderInfoLog, GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog) \
 	GLE(void, GetShaderiv, GLuint shader, GLenum pname, GLint *params) \
 	GLE(void, LinkProgram, GLuint program) \
 	GLE(void, ShaderSource, GLuint shader, GLsizei count, const GLchar* const *string, const GLint *length) \
