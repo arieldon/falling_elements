@@ -63,6 +63,6 @@ static void MenuInputMouseButtonRelease(s32 X, s32 Y);
 // that needs this call should use it internally.
 static inline b32 MouseOverTarget(quad Target);
 
-#define MenuButton(Icon, IconColor, Label) MenuButtonID(__LINE__, Icon, IconColor, Label)
+#define MenuButton(Icon, IconColor) MenuButtonID(__LINE__, Icon, IconColor)
 
 #endif

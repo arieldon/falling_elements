@@ -70,7 +70,7 @@ MouseOverTarget(quad Target)
 }
 
 static b32
-MenuButtonID(u32 ID, menu_icon Icon, u32 IconColor, string Label)
+MenuButtonID(u32 ID, menu_icon Icon, u32 IconColor)
 {
 	b32 Clicked = false;
 
@@ -91,7 +91,6 @@ MenuButtonID(u32 ID, menu_icon Icon, u32 IconColor, string Label)
 	// frame after pressing it previously.
 	if (MouseOverTarget(Target))
 	{
-		// TODO(ariel) Display label if hot.
 		Target.Color -= 0x11000000;
 		MenuContext.HotID = ID;
 		if (MenuContext.MouseDown)

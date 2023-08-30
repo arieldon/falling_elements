@@ -73,27 +73,31 @@ main(void)
 
 			// TODO(ariel)
 			// - overlay checkmark or something on selected cell type
-			if (MenuButton(MENU_ICON_BLANK, CellTypeColorTable[SAND], StringLiteral("Sand")))
+			if (MenuButton(MENU_ICON_BLANK, CellTypeColorTable[SAND]))
 			{
 				Creating = SAND;
 			}
-			if (MenuButton(MENU_ICON_BLANK, CellTypeColorTable[WATER], StringLiteral("Water")))
+			if (MenuButton(MENU_ICON_BLANK, CellTypeColorTable[WATER]))
 			{
 				Creating = WATER;
 			}
-			if (MenuButton(MENU_ICON_BLANK, CellTypeColorTable[WOOD], StringLiteral("Wood")))
+			if (MenuButton(MENU_ICON_BLANK, CellTypeColorTable[GAS]))
+			{
+				Creating = GAS;
+			}
+			if (MenuButton(MENU_ICON_BLANK, CellTypeColorTable[WOOD]))
 			{
 				Creating = WOOD;
 			}
-			if (MenuButton(MENU_ICON_BLANK, 0xff000000, StringLiteral("Blank")))
+			if (MenuButton(MENU_ICON_BLANK, 0xff000000))
 			{
 				Creating = BLANK;
 			}
-			if (MenuButton(MENU_ICON_CLEAR, 0xff000000, StringLiteral("Clear")))
+			if (MenuButton(MENU_ICON_CLEAR, 0xff000000))
 			{
 				ShouldClearScreen = true;
 			}
-			if (Playing ? MenuButton(MENU_ICON_PAUSE, 0xff333333, StringLiteral("Pause")) : MenuButton(MENU_ICON_PLAY, 0xff333333, StringLiteral("Play")))
+			if (Playing ? MenuButton(MENU_ICON_PAUSE, 0xff333333) : MenuButton(MENU_ICON_PLAY, 0xff333333))
 			{
 				Playing ^= 1;
 			}
