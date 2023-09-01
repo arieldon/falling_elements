@@ -118,6 +118,26 @@ main(void)
 					Cell(LocationX, LocationY).Type = Creating;
 					Cell(LocationX, LocationY).Color = CellTypeColorTable[Creating] + Modifier;
 				}
+				else if (Creating == GAS)
+				{
+					for (s32 Y = -4; Y < 4; Y += 1)
+					{
+						for (s32 X = -4; X < 4; X += 1)
+						{
+							u32 CellY = Clamp(Y+LocationY, 0, Y_CELL_COUNT);
+							u32 CellX = Clamp(X+LocationX, 0, X_CELL_COUNT);
+							cell_type OriginalType = Cell(CellX, CellY).Type;
+							if (!OriginalType)
+							{
+								u32 Modifier = RandomU32InRange(0x00, 0x33) << 8;
+								b32 Chance = RandomU32InRange(0, 31) == 0;
+								cell_type NewType = (cell_type)(Creating * Chance);
+								Cell(CellX, CellY).Type = NewType;
+								Cell(CellX, CellY).Color = CellTypeColorTable[NewType] + Modifier;
+							}
+						}
+					}
+				}
 				else if (Creating == WOOD)
 				{
 					u32 Modifier = RandomU32InRange(0x00, 0x22);
@@ -215,6 +235,14 @@ main(void)
 		{
 			Quads[QuadsCount] = MenuContext.Commands[Index];
 			QuadsCount += 1;
+		}
+
+		for (s32 Y = CELL_START; Y <= Y_CELL_COUNT; Y += 1)
+		{
+			for (s32 X = CELL_START; X <= X_CELL_COUNT; X += 1)
+			{
+				Cell(X, Y).Updated = false;
+			}
 		}
 
 		PresentBuffer();

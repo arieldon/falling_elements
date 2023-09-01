@@ -16,6 +16,7 @@ enum cell_type
 {
 	// NOTE(ariel) Sort cell type by density.
 	BLANK,
+	GAS,
 	WATER,
 	SAND,
 	WOOD,
@@ -27,8 +28,9 @@ StaticAssert(sizeof(cell_type) == 1);
 typedef struct cell cell;
 struct cell
 {
-	u32 Color;
 	cell_type Type;
+	u8 Updated;
+	u32 Color;
 };
 
 static cell CellBuffer[Y_CELL_COUNT_WITH_PADDING * X_CELL_COUNT_WITH_PADDING];
@@ -36,6 +38,7 @@ static cell CellBuffer[Y_CELL_COUNT_WITH_PADDING * X_CELL_COUNT_WITH_PADDING];
 #define Cell(X, Y) CellBuffer[(X_CELL_COUNT_WITH_PADDING)*(Y) + (X)]
 
 static void TransitionCell(s32 X, s32 Y);
+static void TransitionGasCell(s32 X, s32 Y);
 static void TransitionWaterCell(s32 X, s32 Y);
 static void TransitionSandCell(s32 X, s32 Y);
 static void CreateBoundary(void);

@@ -2,6 +2,7 @@ u32 CellTypeColorTable[CELL_TYPE_COUNT] =
 {
 	[BLANK] = 0x00000000,
 	[WATER] = 0xffcc0000,
+	[GAS] = 0xff00cc00,
 	[SAND] = 0xff00ccff,
 	[WOOD] = 0xff38495c,
 	[HOLY_BOUNDARY] = 0xffffffff,
@@ -10,32 +11,73 @@ u32 CellTypeColorTable[CELL_TYPE_COUNT] =
 static void
 TransitionCell(s32 X, s32 Y)
 {
-	switch (Cell(X, Y).Type)
+	if (!Cell(X, Y).Updated)
 	{
-		case BLANK: break;
-		case WATER: TransitionWaterCell(X, Y); break;
-		case SAND: TransitionSandCell(X, Y); break;
-		case WOOD: break;
-		case HOLY_BOUNDARY: break;
-		case CELL_TYPE_COUNT: break;
+		switch (Cell(X, Y).Type)
+		{
+			case BLANK: break;
+			case GAS: TransitionGasCell(X, Y); break;
+			case WATER: TransitionWaterCell(X, Y); break;
+			case SAND: TransitionSandCell(X, Y); break;
+			case WOOD: break;
+			case HOLY_BOUNDARY: break;
+			case CELL_TYPE_COUNT: break;
+		}
+	}
+}
+
+static s32 inline
+GetDirection(void)
+{
+	s32 Result = RandomU32InRange(0, 1) * 2 - 1;
+	return Result;
+}
+
+static void
+TransitionGasCell(s32 X, s32 Y)
+{
+	s32 Direction = GetDirection();
+	if (Cell(X, Y-1).Type < GAS)
+	{
+		Swap(Cell(X, Y), Cell(X, Y-1));
+		Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
+		Cell(X, Y-1).Updated = true;
+	}
+	else if (Cell(X-Direction, Y).Type < GAS)
+	{
+		Swap(Cell(X, Y), Cell(X-Direction, Y));
+		Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
+		Cell(X-Direction, Y).Updated = true;
+	}
+	else if (Cell(X+Direction, Y).Type < GAS)
+	{
+		Swap(Cell(X, Y), Cell(X+Direction, Y));
+		Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
+		Cell(X+Direction, Y).Updated = true;
 	}
 }
 
 static void
 TransitionWaterCell(s32 X, s32 Y)
 {
-	u32 Direction = RandomU32InRange(0, 1) ? -1 : 1;
+	s32 Direction = GetDirection();
 	if (Cell(X, Y+1).Type < WATER)
 	{
 		Swap(Cell(X, Y), Cell(X, Y+1));
+		Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
+		Cell(X, Y+1).Updated = true;
 	}
 	else if (Cell(X-Direction, Y).Type < WATER)
 	{
 		Swap(Cell(X, Y), Cell(X-Direction, Y));
+		Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
+		Cell(X-Direction, Y).Updated = true;
 	}
 	else if (Cell(X+Direction, Y).Type < WATER)
 	{
 		Swap(Cell(X, Y), Cell(X+Direction, Y));
+		Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
+		Cell(X+Direction, Y).Updated = true;
 	}
 }
 
@@ -45,14 +87,20 @@ TransitionSandCell(s32 X, s32 Y)
 	if (Cell(X, Y+1).Type < SAND)
 	{
 		Swap(Cell(X, Y), Cell(X, Y+1));
+		Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
+		Cell(X, Y+1).Updated = true;
 	}
 	else if (Cell(X-1, Y+1).Type < SAND)
 	{
 		Swap(Cell(X, Y), Cell(X-1, Y+1));
+		Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
+		Cell(X-1, Y+1).Updated = true;
 	}
 	else if (Cell(X+1, Y+1).Type < SAND)
 	{
 		Swap(Cell(X, Y), Cell(X+1, Y+1));
+		Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
+		Cell(X+1, Y+1).Updated = true;
 	}
 }
 
