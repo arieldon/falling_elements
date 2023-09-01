@@ -1,4 +1,7 @@
 typedef GLXContext (* glXCreateContextAttribsARBProc)(Display *, GLXFBConfig, GLXContext, b32, int *);
+typedef void (* glXSwapIntervalEXTProc)(Display *, GLXDrawable, int);
+typedef int (* glXSwapIntervalSGIProc)(int);
+typedef int (* glXSwapIntervalMESAProc)(unsigned int);
 
 static void
 OpenWindow(void)
@@ -71,6 +74,33 @@ OpenWindow(void)
 	};
 	X11GLContext = glXCreateContextAttribsARB(X11Display, ViableFramebuffers[0], 0, True, GLXContextAttributes);
 	Assert(X11GLContext);
+
+	// NOTE(ariel) Enable VSync if support exists.
+	{
+		int EnableVSync = 1;
+
+		glXSwapIntervalEXTProc glXSwapIntervalEXT = 0;
+		glXSwapIntervalSGIProc glXSwapIntervalSGI = 0;
+		glXSwapIntervalMESAProc glXSwapIntervalMESA = 0;
+
+		glXSwapIntervalEXT = (glXSwapIntervalEXTProc)glXGetProcAddress((const GLubyte *)"glXSwapIntervalEXT");
+		glXSwapIntervalSGI = (glXSwapIntervalSGIProc)glXGetProcAddress((const GLubyte *)"glXSwapIntervalSGI");
+		glXSwapIntervalMESA = (glXSwapIntervalMESAProc)glXGetProcAddress((const GLubyte *)"glXSwapIntervalMESA");
+
+		if (glXSwapIntervalEXT)
+		{
+			GLXDrawable X11Drawable = glXGetCurrentDrawable();
+			glXSwapIntervalEXT(X11Display, X11Drawable, -1);
+		}
+		else if (glXSwapIntervalSGI)
+		{
+			glXSwapIntervalSGI(EnableVSync);
+		}
+		else if (glXSwapIntervalMESA)
+		{
+			glXSwapIntervalMESA(EnableVSync);
+		}
+	}
 
 	XMapWindow(X11Display, X11Window);
 	glXMakeCurrent(X11Display, X11Window, X11GLContext);

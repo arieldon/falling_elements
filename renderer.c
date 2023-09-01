@@ -241,7 +241,7 @@ PresentBuffer(void)
 	glClear(GL_COLOR_BUFFER_BIT);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Quads[0]) * QuadsCount, Quads);
 	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, QuadsCount);
-	glXSwapBuffers(X11Display, X11Window); // TODO(ariel) Use vertical sync if it's available?
+	glXSwapBuffers(X11Display, X11Window);
 }
 
 static inline u64
