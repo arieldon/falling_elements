@@ -78,13 +78,17 @@ main(void)
 			{
 				Creating = WATER;
 			}
-			if (MenuButton(MENU_ICON_BLANK, CellTypeColorTable[GAS]))
+			if (MenuButton(MENU_ICON_BLANK, 0xff00bb00))
 			{
 				Creating = GAS;
 			}
 			if (MenuButton(MENU_ICON_BLANK, CellTypeColorTable[WOOD]))
 			{
 				Creating = WOOD;
+			}
+			if (MenuButton(MENU_ICON_BLANK, CellTypeColorTable[FIRE]))
+			{
+				Creating = FIRE;
 			}
 			if (MenuButton(MENU_ICON_BLANK, 0xff000000))
 			{
@@ -107,62 +111,7 @@ main(void)
 		{
 			s32 LocationY = MenuContext.MousePositionY / CELL_SIZE + CELL_START;
 			s32 LocationX = MenuContext.MousePositionX / CELL_SIZE + CELL_START;
-			if (Cell(LocationX, LocationY).Type == BLANK)
-			{
-				if (Creating == SAND)
-				{
-					Cell(LocationX, LocationY).Type = Creating;
-					Cell(LocationX, LocationY).ColorModification = (u8)RandomU32InRange(0x00, 0x33);
-				}
-				else if (Creating == GAS)
-				{
-					for (s32 Y = -4; Y < 4; Y += 1)
-					{
-						for (s32 X = -4; X < 4; X += 1)
-						{
-							u32 CellY = Clamp(Y+LocationY, 0, Y_CELL_COUNT);
-							u32 CellX = Clamp(X+LocationX, 0, X_CELL_COUNT);
-							cell_type OriginalType = Cell(CellX, CellY).Type;
-							if (!OriginalType)
-							{
-								b32 Chance = RandomU32InRange(0, 31) == 0;
-								cell_type NewType = (cell_type)(Creating * Chance);
-								Cell(CellX, CellY).Type = NewType;
-								Cell(CellX, CellY).ColorModification = (u8)RandomU32InRange(0x00, 0x33);
-							}
-						}
-					}
-				}
-				else if (Creating == WOOD)
-				{
-					Cell(LocationX, LocationY).Type = Creating;
-					Cell(LocationX, LocationY).ColorModification = (u8)RandomU32InRange(0x00, 0x22);
-				}
-				else if (Creating == WATER)
-				{
-					for (s32 Y = -4; Y < 4; Y += 1)
-					{
-						for (s32 X = -4; X < 4; X += 1)
-						{
-							u32 CellY = Clamp(Y+LocationY, 0, Y_CELL_COUNT);
-							u32 CellX = Clamp(X+LocationX, 0, X_CELL_COUNT);
-							cell_type OriginalType = Cell(CellX, CellY).Type;
-							if (!OriginalType)
-							{
-								b32 Chance = RandomU32InRange(0, 31) == 0;
-								cell_type NewType = (cell_type)(Creating * Chance);
-								Cell(CellX, CellY).Type = NewType;
-								Cell(CellX, CellY).ColorModification = (u8)RandomU32InRange(0x00, 0x33);
-							}
-						}
-					}
-				}
-			}
-			else if (Creating == BLANK)
-			{
-				Cell(LocationX, LocationY).Type = Creating;
-				Cell(LocationX, LocationY).ColorModification = 0x00;
-			}
+			SpawnCells(LocationX, LocationY);
 		}
 
 		if (ShouldClearScreen)

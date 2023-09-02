@@ -14,12 +14,13 @@ enum
 typedef enum cell_type cell_type;
 enum cell_type
 {
-	// NOTE(ariel) Sort cell type by density.
+	// NOTE(ariel) Sort cell type by density (except fire).
 	BLANK,
 	GAS,
 	WATER,
 	SAND,
 	WOOD,
+	FIRE,
 	HOLY_BOUNDARY,
 	CELL_TYPE_COUNT,
 } __attribute__((packed));
@@ -28,10 +29,11 @@ StaticAssert(sizeof(cell_type) == 1);
 u32 CellTypeColorTable[CELL_TYPE_COUNT] =
 {
 	[BLANK] = 0x00000000,
+	[GAS] = 0xff333333,
 	[WATER] = 0xffcc0000,
-	[GAS] = 0xff00cc00,
 	[SAND] = 0xff00ccff,
 	[WOOD] = 0xff38495c,
+	[FIRE] = 0xff3344ff,
 	[HOLY_BOUNDARY] = 0xffffffff,
 };
 
@@ -41,7 +43,9 @@ struct cell
 	cell_type Type;
 	u8 Updated;
 	u8 ColorModification;
+	u8 FramesToLive;
 };
+StaticAssert(sizeof(cell) == 4);
 
 static cell CellBuffer[Y_CELL_COUNT_WITH_PADDING * X_CELL_COUNT_WITH_PADDING];
 
@@ -51,6 +55,9 @@ static void TransitionCell(s32 X, s32 Y);
 static void TransitionGasCell(s32 X, s32 Y);
 static void TransitionWaterCell(s32 X, s32 Y);
 static void TransitionSandCell(s32 X, s32 Y);
+static void TransitionFireCell(s32 X, s32 Y);
+
+static void SpawnCells(s32 X, s32 Y);
 static void CreateBoundary(void);
 
 #endif
