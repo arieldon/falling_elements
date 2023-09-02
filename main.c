@@ -26,7 +26,6 @@ static cell_type Creating = SAND;
 #include "automata.c"
 #include "menu.c"
 
-
 static inline b32
 IsInWindowSpace(vector2s Location)
 {
@@ -71,8 +70,6 @@ main(void)
 		{
 			BeginMenu();
 
-			// TODO(ariel)
-			// - overlay checkmark or something on selected cell type
 			if (MenuButton(MENU_ICON_BLANK, CellTypeColorTable[SAND]))
 			{
 				Creating = SAND;
