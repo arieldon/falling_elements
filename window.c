@@ -18,7 +18,7 @@ OpenWindow(void)
 		X11Display, X11DefaultRootWindow,
 		0, 0, WINDOW_WIDTH, WINDOW_HEIGHT,
 		WINDOW_BORDER_WIDTH, ForegroundColor, BackgroundColor);
-	long EventMask = KeyPressMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
+	long EventMask = KeyPressMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask;
 	XSelectInput(X11Display, X11Window, EventMask);
 
 	// NOTE(ariel) Fix window size.
@@ -75,6 +75,9 @@ OpenWindow(void)
 	X11GLContext = glXCreateContextAttribsARB(X11Display, ViableFramebuffers[0], 0, True, GLXContextAttributes);
 	Assert(X11GLContext);
 
+	XMapWindow(X11Display, X11Window);
+	glXMakeCurrent(X11Display, X11Window, X11GLContext);
+
 	// NOTE(ariel) Enable VSync if support exists.
 	{
 		int EnableVSync = 1;
@@ -102,8 +105,19 @@ OpenWindow(void)
 		}
 	}
 
-	XMapWindow(X11Display, X11Window);
-	glXMakeCurrent(X11Display, X11Window, X11GLContext);
+	// NOTE(ariel) Hide cursor by default.
+	{
+		XColor Color = {0};
+		Color.red = Color.red = Color.blue = 0;
+
+		Pixmap PixmapID = XCreatePixmap(X11Display, X11DefaultRootWindow, 1, 1, 1);
+		Assert(PixmapID);
+
+		InvisibleCursor = XCreatePixmapCursor(X11Display, PixmapID, PixmapID, &Color, &Color, 0, 0);
+		XFreePixmap(X11Display, PixmapID);
+
+		XDefineCursor(X11Display, X11Window, InvisibleCursor);
+	}
 
 	XFree(ViableFramebuffers);
 	XFlush(X11Display);
@@ -151,6 +165,16 @@ HandleInput(void)
 			{
 				XPointerMovedEvent *Event = (XPointerMovedEvent *)&GeneralEvent;
 				MenuInputMouseMove(Event->x, Event->y);
+				break;
+			}
+			case EnterNotify:
+			{
+				Focused = true;
+				break;
+			}
+			case LeaveNotify:
+			{
+				Focused = false;
 				break;
 			}
 			case ClientMessage:

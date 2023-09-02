@@ -8,6 +8,14 @@ static void
 BeginMenu(void)
 {
 	b32 HotMenu = MouseOverTarget(MenuContext.EntireMenu);
+	if (HotMenu)
+	{
+		XUndefineCursor(X11Display, X11Window);
+	}
+	else
+	{
+		XDefineCursor(X11Display, X11Window, InvisibleCursor);
+	}
 	MenuContext.OffsetX = MenuContext.StartOffsetX = WINDOW_WIDTH - ICON_SIZE*HotMenu;
 	MenuContext.OffsetY = MenuContext.StartOffsetY = WINDOW_HEIGHT/2 - (ICON_SIZE+PADDING)/2 - MenuContext.Height/2;
 	MenuContext.Width = 0;

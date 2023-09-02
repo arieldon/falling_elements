@@ -45,6 +45,61 @@ ShouldCreateCell(void)
 	return Result;
 }
 
+static inline void
+SetBrushPixel(s32 X, s32 Y)
+{
+	Quads[QuadsCount].X = X;
+	Quads[QuadsCount].Y = Y;
+	Quads[QuadsCount].Width = 1;
+	Quads[QuadsCount].Height = 1;
+	Quads[QuadsCount].Color = 0xffffffff;
+	Quads[QuadsCount].TextureID = MENU_ICON_BLANK;
+	QuadsCount += 1;
+}
+
+static void
+DrawBrush(void)
+{
+	if (!MouseOverTarget(MenuContext.EntireMenu) && Focused)
+	{
+		int Cx = MenuContext.MousePositionX;
+		int Cy = MenuContext.MousePositionY;
+		int R = 32;
+
+		// NOTE(casey): Loop that draws the circle
+		{
+			int R2 = R+R;
+
+			int X = R;
+			int Y = 0;
+			int dY = -2;
+			int dX = R2+R2 - 4;
+			int D = R2 - 1;
+
+			while(Y <= X)
+			{
+				SetBrushPixel(Cx - X, Cy - Y);
+				SetBrushPixel(Cx + X, Cy - Y);
+				SetBrushPixel(Cx - X, Cy + Y);
+				SetBrushPixel(Cx + X, Cy + Y);
+				SetBrushPixel(Cx - Y, Cy - X);
+				SetBrushPixel(Cx + Y, Cy - X);
+				SetBrushPixel(Cx - Y, Cy + X);
+				SetBrushPixel(Cx + Y, Cy + X);
+
+				D += dY;
+				dY -= 4;
+				++Y;
+
+				int Mask = (D >> 31);
+				D += dX & Mask;
+				dX -= 4 & Mask;
+				X += Mask;
+			}
+		}
+	}
+}
+
 int
 main(void)
 {
@@ -178,6 +233,8 @@ main(void)
 			Quads[QuadsCount] = MenuContext.Commands[Index];
 			QuadsCount += 1;
 		}
+
+		DrawBrush();
 
 		for (s32 Y = CELL_START; Y <= Y_CELL_COUNT; Y += 1)
 		{

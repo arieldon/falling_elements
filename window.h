@@ -13,7 +13,9 @@ StaticAssert(WINDOW_HEIGHT > 0);
 static Display *X11Display;
 static GLXContext X11GLContext;
 static Window X11Window;
+static Cursor InvisibleCursor;
 static Atom X11DeleteWindowEvent;
+static b32 Focused;
 
 static void OpenWindow(void);
 static void CloseWindow(void);
