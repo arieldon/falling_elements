@@ -114,9 +114,8 @@ main(void)
 			{
 				if (Creating == SAND)
 				{
-					u32 Modifier = RandomU32InRange(0x00, 0x33) << 8;
 					Cell(LocationX, LocationY).Type = Creating;
-					Cell(LocationX, LocationY).Color = CellTypeColorTable[Creating] + Modifier;
+					Cell(LocationX, LocationY).ColorModification = (u8)RandomU32InRange(0x00, 0x33);
 				}
 				else if (Creating == GAS)
 				{
@@ -129,20 +128,18 @@ main(void)
 							cell_type OriginalType = Cell(CellX, CellY).Type;
 							if (!OriginalType)
 							{
-								u32 Modifier = RandomU32InRange(0x00, 0x33) << 8;
 								b32 Chance = RandomU32InRange(0, 31) == 0;
 								cell_type NewType = (cell_type)(Creating * Chance);
 								Cell(CellX, CellY).Type = NewType;
-								Cell(CellX, CellY).Color = CellTypeColorTable[NewType] + Modifier;
+								Cell(CellX, CellY).ColorModification = (u8)RandomU32InRange(0x00, 0x33);
 							}
 						}
 					}
 				}
 				else if (Creating == WOOD)
 				{
-					u32 Modifier = RandomU32InRange(0x00, 0x22);
 					Cell(LocationX, LocationY).Type = Creating;
-					Cell(LocationX, LocationY).Color = CellTypeColorTable[Creating] + Modifier;
+					Cell(LocationX, LocationY).ColorModification = (u8)RandomU32InRange(0x00, 0x22);
 				}
 				else if (Creating == WATER)
 				{
@@ -155,11 +152,10 @@ main(void)
 							cell_type OriginalType = Cell(CellX, CellY).Type;
 							if (!OriginalType)
 							{
-								u32 Modifier = RandomU32InRange(0x00, 0x33) << 8;
 								b32 Chance = RandomU32InRange(0, 31) == 0;
 								cell_type NewType = (cell_type)(Creating * Chance);
 								Cell(CellX, CellY).Type = NewType;
-								Cell(CellX, CellY).Color = CellTypeColorTable[NewType] + Modifier;
+								Cell(CellX, CellY).ColorModification = (u8)RandomU32InRange(0x00, 0x33);
 							}
 						}
 					}
@@ -168,7 +164,7 @@ main(void)
 			else if (Creating == BLANK)
 			{
 				Cell(LocationX, LocationY).Type = Creating;
-				Cell(LocationX, LocationY).Color = CellTypeColorTable[Creating];
+				Cell(LocationX, LocationY).ColorModification = 0x00;
 			}
 		}
 
@@ -224,7 +220,7 @@ main(void)
 					Quads[QuadsCount].X = PixelX;
 					Quads[QuadsCount].Width = CELL_SIZE;
 					Quads[QuadsCount].Height = CELL_SIZE;
-					Quads[QuadsCount].Color = Cell(X, Y).Color;
+					Quads[QuadsCount].Color = CellTypeColorTable[Cell(X, Y).Type] + (Cell(X, Y).ColorModification<<8);
 					Quads[QuadsCount].TextureID = MENU_ICON_BLANK;
 					QuadsCount += 1;
 				}

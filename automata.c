@@ -1,13 +1,3 @@
-u32 CellTypeColorTable[CELL_TYPE_COUNT] =
-{
-	[BLANK] = 0x00000000,
-	[WATER] = 0xffcc0000,
-	[GAS] = 0xff00cc00,
-	[SAND] = 0xff00ccff,
-	[WOOD] = 0xff38495c,
-	[HOLY_BOUNDARY] = 0xffffffff,
-};
-
 static void
 TransitionCell(s32 X, s32 Y)
 {
@@ -110,15 +100,15 @@ BoundCells(void)
 	for (s32 X = 0; X < X_CELL_COUNT_WITH_PADDING; X += 1)
 	{
 		Cell(X, 0).Type = HOLY_BOUNDARY;
-		Cell(X, 0).Color = CellTypeColorTable[HOLY_BOUNDARY];
+		Cell(X, 0).ColorModification = 0x00;
 		Cell(X, Y_CELL_COUNT+1).Type = HOLY_BOUNDARY;
-		Cell(X, Y_CELL_COUNT+1).Color = CellTypeColorTable[HOLY_BOUNDARY];
+		Cell(X, Y_CELL_COUNT+1).ColorModification = 0x00;
 	}
 	for (s32 Y = 0; Y < Y_CELL_COUNT_WITH_PADDING; Y += 1)
 	{
 		Cell(0, Y).Type = HOLY_BOUNDARY;
-		Cell(0, Y).Color = CellTypeColorTable[HOLY_BOUNDARY];
+		Cell(0, Y).ColorModification = 0x00;
 		Cell(X_CELL_COUNT+1, Y).Type = HOLY_BOUNDARY;
-		Cell(X_CELL_COUNT+1, Y).Color = CellTypeColorTable[HOLY_BOUNDARY];
+		Cell(X_CELL_COUNT+1, Y).ColorModification = 0x00;
 	}
 }
