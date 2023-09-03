@@ -141,6 +141,9 @@ TransitionFireCell(s32 X, s32 Y)
 		Cell(X, Y).ColorModification = (u8)RandomU32InRange(0x00, SMOKE_COLOR_MODIFICAITON);
 		Cell(X, Y).FramesToLive = 255;
 		Cell(X, Y).Updated = true;
+		Cell(X, Y+1).Type = BLANK;
+		Cell(X, Y+1).Updated = true;
+		Cell(X, Y+1).ColorModification = 0x00;
 	}
 	else if (Cell(X-Direction, Y).Type == WATER)
 	{
@@ -148,6 +151,9 @@ TransitionFireCell(s32 X, s32 Y)
 		Cell(X, Y).ColorModification = (u8)RandomU32InRange(0x00, SMOKE_COLOR_MODIFICAITON);
 		Cell(X, Y).FramesToLive = 255;
 		Cell(X, Y).Updated = true;
+		Cell(X-Direction, Y).Type = BLANK;
+		Cell(X-Direction, Y).Updated = true;
+		Cell(X-Direction, Y).ColorModification = 0x00;
 	}
 	else if (Cell(X+Direction, Y).Type == WATER)
 	{
@@ -155,6 +161,9 @@ TransitionFireCell(s32 X, s32 Y)
 		Cell(X, Y).ColorModification = (u8)RandomU32InRange(0x00, SMOKE_COLOR_MODIFICAITON);
 		Cell(X, Y).FramesToLive = 255;
 		Cell(X, Y).Updated = true;
+		Cell(X+Direction, Y).Type = BLANK;
+		Cell(X+Direction, Y).Updated = true;
+		Cell(X+Direction, Y).ColorModification = 0x00;
 	}
 	else if (Cell(X, Y+1).Type <= GAS)
 	{
