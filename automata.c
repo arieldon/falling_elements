@@ -218,7 +218,7 @@ SpawnCells(s32 X, s32 Y)
 					u32 CellX = Clamp(CircleX+X, 0, X_CELL_COUNT);
 					if (Cell(CellX, CellY).Type == BLANK)
 					{
-						b32 Chance = RandomU32InRange(0, 4) == 0;
+						b32 Chance = Creating == WOOD || RandomU32InRange(0, 4) == 0;
 						cell_type NewType = (cell_type)(Creating * Chance);
 						Cell(CellX, CellY).Type = NewType;
 						Cell(CellX, CellY).ColorModification = (u8)RandomU32InRange(0x00, ColorModifications[Creating]);
