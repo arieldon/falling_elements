@@ -4,19 +4,31 @@ enum
 	PADDING = 8,
 };
 
+static inline b32
+MouseOverTarget(quad Target)
+{
+	b32 X0 = Input.MousePositionX >= Target.X;
+	b32 X1 = Input.MousePositionX <= Target.X + Target.Width;
+	b32 Y0 = Input.MousePositionY >= Target.Y;
+	b32 Y1 = Input.MousePositionY <= Target.Y + Target.Height;
+	b32 Result = X0 & X1 & Y0 & Y1;
+	return Result;
+}
+
 static void
 BeginMenu(void)
 {
-	b32 HotMenu = MouseOverTarget(MenuContext.EntireMenu);
-	if (HotMenu)
+	MenuContext.MenuIsHot = MouseOverTarget(MenuContext.EntireMenu);
+	if (MenuContext.MenuIsHot)
 	{
-		XUndefineCursor(X11Display, X11Window);
+		ShowCursor();
 	}
 	else
 	{
-		XDefineCursor(X11Display, X11Window, InvisibleCursor);
+		HideCursor();
 	}
-	MenuContext.OffsetX = MenuContext.StartOffsetX = WINDOW_WIDTH - ICON_SIZE*HotMenu;
+
+	MenuContext.OffsetX = MenuContext.StartOffsetX = WINDOW_WIDTH - ICON_SIZE*MenuContext.MenuIsHot;
 	MenuContext.OffsetY = MenuContext.StartOffsetY = WINDOW_HEIGHT/2 - (ICON_SIZE+PADDING)/2 - MenuContext.Height/2;
 	MenuContext.Width = 0;
 	MenuContext.Height = 0;
@@ -34,7 +46,7 @@ EndMenu(void)
 		MenuContext.CommandCount = 0;
 	}
 
-	MenuContext.PreviousMouseDown = MenuContext.MouseDown;
+	MenuContext.PreviousFrameMouseDown = Input.MouseDown;
 
 	MenuContext.EntireMenu.X -= ICON_SIZE;
 	MenuContext.EntireMenu.Y -= ICON_SIZE / 2;
@@ -43,38 +55,6 @@ EndMenu(void)
 	MenuContext.EntireMenu.Color = 0xffffffff;
 	MenuContext.EntireMenu.TextureID = MENU_ICON_BLANK;
 	MenuContext.Commands[0] = MenuContext.EntireMenu;
-}
-
-static void
-MenuInputMouseMove(s32 X, s32 Y)
-{
-	MenuContext.MousePositionX = X;
-	MenuContext.MousePositionY = Y;
-}
-
-static void
-MenuInputMouseButtonPress(s32 X, s32 Y)
-{
-	MenuContext.MouseDown = true;
-	MenuInputMouseMove(X, Y);
-}
-
-static void
-MenuInputMouseButtonRelease(s32 X, s32 Y)
-{
-	MenuContext.MouseDown = false;
-	MenuInputMouseMove(X, Y);
-}
-
-static inline b32
-MouseOverTarget(quad Target)
-{
-	b32 X0 = MenuContext.MousePositionX >= Target.X;
-	b32 X1 = MenuContext.MousePositionX <= Target.X + Target.Width;
-	b32 Y0 = MenuContext.MousePositionY >= Target.Y;
-	b32 Y1 = MenuContext.MousePositionY <= Target.Y + Target.Height;
-	b32 Result = X0 & X1 & Y0 & Y1;
-	return Result;
 }
 
 static b32
@@ -99,17 +79,19 @@ MenuButtonID(u32 ID, menu_icon Icon, u32 IconColor)
 	// frame after pressing it previously.
 	if (MouseOverTarget(Target))
 	{
-		Target.Color -= 0x11000000;
 		MenuContext.HotID = ID;
-		if (MenuContext.MouseDown)
+
+		if (!MenuContext.PreviousFrameMouseDown && Input.MouseDown)
 		{
-			Target.Color -= 0x22000000;
 			MenuContext.ActiveID = ID;
 		}
-		else if (MenuContext.PreviousMouseDown)
+		else if (MenuContext.ActiveID == ID && MenuContext.PreviousFrameMouseDown && !Input.MouseDown)
 		{
 			Clicked = true;
+			MenuContext.ActiveID = 0;
 		}
+
+		Target.Color -= 0x11000000*(MenuContext.HotID == ID) + 0x11000000*(MenuContext.ActiveID == ID);
 	}
 
 	MenuContext.Commands[MenuContext.CommandCount] = Target;

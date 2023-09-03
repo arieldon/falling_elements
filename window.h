@@ -15,10 +15,23 @@ static GLXContext X11GLContext;
 static Window X11Window;
 static Cursor InvisibleCursor;
 static Atom X11DeleteWindowEvent;
-static b32 Focused;
+
+typedef struct input input;
+struct input
+{
+	s32 MousePositionX;
+	s32 MousePositionY;
+	s32 MouseDown;
+	s32 PreviousMouseDown;
+	b32 CursorIsInWindow;
+};
+static input Input;
 
 static void OpenWindow(void);
 static void CloseWindow(void);
+
+static void HideCursor(void);
+static void ShowCursor(void);
 
 static void HandleInput(void);
 

@@ -116,7 +116,7 @@ OpenWindow(void)
 		InvisibleCursor = XCreatePixmapCursor(X11Display, PixmapID, PixmapID, &Color, &Color, 0, 0);
 		XFreePixmap(X11Display, PixmapID);
 
-		XDefineCursor(X11Display, X11Window, InvisibleCursor);
+		HideCursor();
 	}
 
 	XFree(ViableFramebuffers);
@@ -129,6 +129,18 @@ CloseWindow(void)
 	glXDestroyContext(X11Display, X11GLContext);
 	XDestroyWindow(X11Display, X11Window);
 	XCloseDisplay(X11Display);
+}
+
+static void
+HideCursor(void)
+{
+	XDefineCursor(X11Display, X11Window, InvisibleCursor);
+}
+
+static void
+ShowCursor(void)
+{
+	XUndefineCursor(X11Display, X11Window);
 }
 
 static void
@@ -152,29 +164,36 @@ HandleInput(void)
 			case ButtonPress:
 			{
 				XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
-				MenuInputMouseButtonPress(Event->x, Event->y);
+				Input.MousePositionX = Event->x;
+				Input.MousePositionY = Event->y;
+				Input.PreviousMouseDown = Input.MouseDown;
+				Input.MouseDown = true;
 				break;
 			}
 			case ButtonRelease:
 			{
 				XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
-				MenuInputMouseButtonRelease(Event->x, Event->y);
+				Input.MousePositionX = Event->x;
+				Input.MousePositionY = Event->y;
+				Input.PreviousMouseDown = Input.MouseDown;
+				Input.MouseDown = false;
 				break;
 			}
 			case MotionNotify:
 			{
 				XPointerMovedEvent *Event = (XPointerMovedEvent *)&GeneralEvent;
-				MenuInputMouseMove(Event->x, Event->y);
+				Input.MousePositionX = Event->x;
+				Input.MousePositionY = Event->y;
 				break;
 			}
 			case EnterNotify:
 			{
-				Focused = true;
+				Input.CursorIsInWindow = true;
 				break;
 			}
 			case LeaveNotify:
 			{
-				Focused = false;
+				Input.CursorIsInWindow = false;
 				break;
 			}
 			case ClientMessage:

@@ -27,21 +27,20 @@ static cell_type Creating = SAND;
 #include "menu.c"
 
 static inline b32
-IsInWindowSpace(vector2s Location)
+IsInWindowSpace(s32 X, s32 Y)
 {
-	b32 XMin = Location.X >= 0;
-	b32 YMin = Location.Y >= 0;
-	b32 XMax = Location.X < WINDOW_WIDTH;
-	b32 YMax = Location.Y < WINDOW_HEIGHT;
+	b32 XMin = X >= 0;
+	b32 YMin = Y >= 0;
+	b32 XMax = X < WINDOW_WIDTH;
+	b32 YMax = Y < WINDOW_HEIGHT;
 	return XMin & YMin & XMax & YMax;
 }
 
 static inline b32
 ShouldCreateCell(void)
 {
-	b32 MenuNotHot = !MouseOverTarget(MenuContext.EntireMenu);
-	b32 InWindowSpace = IsInWindowSpace(MenuContext.MousePosition);
-	b32 Result = MenuNotHot & InWindowSpace & MenuContext.MouseDown;
+	b32 InWindowSpace = IsInWindowSpace(Input.MousePositionX, Input.MousePositionY);
+	b32 Result = Input.MouseDown & InWindowSpace & !MenuContext.MenuIsHot;
 	return Result;
 }
 
@@ -60,10 +59,10 @@ SetBrushPixel(s32 X, s32 Y)
 static void
 DrawBrush(void)
 {
-	if (!MouseOverTarget(MenuContext.EntireMenu) && Focused)
+	if (!MenuContext.MenuIsHot && Input.CursorIsInWindow)
 	{
-		int Cx = MenuContext.MousePositionX;
-		int Cy = MenuContext.MousePositionY;
+		int Cx = Input.MousePositionX;
+		int Cy = Input.MousePositionY;
 		int R = 32;
 
 		// NOTE(casey): Loop that draws the circle
@@ -164,8 +163,8 @@ main(void)
 		// NOTE(ariel) Map new input in window coordinates to cell space.
 		if (ShouldCreateCell())
 		{
-			s32 LocationY = MenuContext.MousePositionY / CELL_SIZE + CELL_START;
-			s32 LocationX = MenuContext.MousePositionX / CELL_SIZE + CELL_START;
+			s32 LocationY = Input.MousePositionY / CELL_SIZE + CELL_START;
+			s32 LocationX = Input.MousePositionX / CELL_SIZE + CELL_START;
 			SpawnCells(LocationX, LocationY);
 		}
 
