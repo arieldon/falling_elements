@@ -35,33 +35,60 @@ AddSpeedSaturated(s8 Speed)
 static void
 TransitionGasCell(s32 X, s32 Y)
 {
-	Cell(X, Y).FramesToLive -= 1;
+	s32 SwapX = X;
+	s32 SwapY = Y;
 
-	s32 Direction = GetDirection();
-	if (Cell(X, Y).FramesToLive == 0)
+	if (!Cell(X, Y).FramesToLive)
 	{
 		Cell(X, Y).Type = BLANK;
 		Cell(X, Y).Updated = true;
 		Cell(X, Y).ColorModification = 0x00;
 	}
-	else if (Cell(X, Y-1).Type < GAS)
+
+	s32 Direction = 1;
+	s32 Speed = Min(4, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
+	for (s32 S = 1; S <= Speed; S += 1)
 	{
-		Swap(Cell(X, Y), Cell(X, Y-1));
-		Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
-		Cell(X, Y-1).Updated = true;
+		s32 Y0 = Y-S;
+		s32 X0 = X+0;
+
+		b32 A = Cell(X0, Y0).Type < GAS;
+		SwapY = A ? Y0 : SwapY;
+		SwapX = A ? X0 : SwapX;
+
+		if (!A)
+		{
+			break;
+		}
 	}
-	else if (Cell(X-Direction, Y).Type < GAS)
+
+	if (SwapX == X && SwapY == Y)
 	{
-		Swap(Cell(X, Y), Cell(X-Direction, Y));
-		Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
-		Cell(X-Direction, Y).Updated = true;
+		for (s32 V = 1; V <= Speed; V += 1)
+		{
+			s32 YN = Y+0;
+			s32 X1 = X+V*Direction;
+			s32 X2 = X-V*Direction;
+
+			b32 B = Cell(X1, YN).Type < GAS;
+			b32 C = Cell(X2, YN).Type < GAS;
+
+			SwapY = B ? YN : SwapY;
+			SwapX = B ? X1 : SwapX;
+			SwapY = C ? YN : SwapY;
+			SwapX = C ? X2 : SwapX;
+
+			if (!B | !C)
+			{
+				break;
+			}
+		}
 	}
-	else if (Cell(X+Direction, Y).Type < GAS)
-	{
-		Swap(Cell(X, Y), Cell(X+Direction, Y));
-		Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
-		Cell(X+Direction, Y).Updated = true;
-	}
+
+	Swap(Cell(X, Y), Cell(SwapX, SwapY));
+	Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
+	Cell(SwapX, SwapY).FramesToLive -= 1;
+	Cell(SwapX, SwapY).Updated = true;
 }
 
 static void
