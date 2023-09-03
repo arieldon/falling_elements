@@ -2,7 +2,7 @@
 
 set -eux
 
-BIN="sand"
+BIN="falling_elements"
 COMPILER="clang"
 
 CFLAGS="-std=c11 -march=native -D_DEFAULT_SOURCE"

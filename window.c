@@ -31,7 +31,7 @@ OpenWindow(void)
 	XSetWMNormalHints(X11Display, X11Window, &SizeHints);
 
 	// NOTE(ariel) Title window.
-	XStoreName(X11Display, X11Window, "Sand");
+	XStoreName(X11Display, X11Window, "Falling Elements");
 
 	// NOTE(ariel) Register event to close window properly when user clicks "x".
 	X11DeleteWindowEvent = XInternAtom(X11Display, "WM_DELETE_WINDOW", false);
