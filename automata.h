@@ -43,7 +43,11 @@ struct cell
 	cell_type Type;
 	u8 Updated;
 	u8 ColorModification;
-	u8 FramesToLive;
+	union
+	{
+		u8 FramesToLive;
+		s8 Speed;
+	};
 };
 StaticAssert(sizeof(cell) == 4);
 
