@@ -37,7 +37,7 @@ IsInWindowSpace(s32 X, s32 Y)
 }
 
 static inline b32
-ShouldCreateCell(void)
+ShouldSpawnCells(void)
 {
 	b32 InWindowSpace = IsInWindowSpace(Input.MousePositionX, Input.MousePositionY);
 	b32 Result = Input.MouseDown & InWindowSpace & !MenuContext.MenuIsHot;
@@ -161,7 +161,7 @@ main(void)
 		}
 
 		// NOTE(ariel) Map new input in window coordinates to cell space.
-		if (ShouldCreateCell())
+		if (ShouldSpawnCells())
 		{
 			s32 LocationY = Input.MousePositionY / CELL_SIZE + CELL_START;
 			s32 LocationX = Input.MousePositionX / CELL_SIZE + CELL_START;
