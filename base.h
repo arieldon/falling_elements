@@ -27,9 +27,13 @@ enum
 	true = 1,
 };
 
+#ifdef DEBUG
 #define Breakpoint() do { __asm__("int $3"); __asm__("nop"); } while (0)
 #define Message(x) fprintf(stderr, "%s:%d: %s: assertion `%s` failed\n", __FILE__, __LINE__, __func__, #x)
 #define Assert(x) do { if (!(x)) { Message(x); Breakpoint(); } } while (0)
+#else
+#define Assert(x)
+#endif
 #define StaticAssert(x) _Static_assert(x, "")
 
 #define Min(A, B) ((A) < (B) ? (A) : (B))
