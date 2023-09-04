@@ -7,10 +7,10 @@ TransitionCell(s32 X, s32 Y)
 		{
 			case BLANK: break;
 			case GAS: TransitionGasCell(X, Y); break;
+			case FIRE: TransitionFireCell(X, Y); break;
 			case WATER: TransitionWaterCell(X, Y); break;
 			case SAND: TransitionSandCell(X, Y); break;
 			case WOOD: break;
-			case FIRE: TransitionFireCell(X, Y); break;
 			case HOLY_BOUNDARY: break;
 			case CELL_TYPE_COUNT: break;
 		}
@@ -74,6 +74,124 @@ TransitionGasCell(s32 X, s32 Y)
 	Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
 	Cell(SwapX, SwapY).FramesToLive -= 1;
 	Cell(SwapX, SwapY).Updated = true;
+}
+
+static void
+TransitionFireCell(s32 X, s32 Y)
+{
+	enum { SMOKE_COLOR_MODIFICAITON = 0x03 };
+
+	typedef enum fire_action fire_action;
+	enum fire_action
+	{
+		FIRE_ACTION_NO_ACTION = 0 << 0,
+		FIRE_ACTION_BURN_WOOD = 1 << 0,
+		FIRE_ACTION_EVAPORATE = 1 << 1,
+		FIRE_ACTION_MOVE_FIRE = 1 << 2,
+	} __attribute__((packed));
+	StaticAssert(sizeof(fire_action) == 1);
+
+	static fire_action FireActionTable[8] =
+	{
+		FIRE_ACTION_NO_ACTION, // 0b00000000 = 0
+		FIRE_ACTION_BURN_WOOD, // 0b00000001 = 1
+		FIRE_ACTION_EVAPORATE, // 0b00000010 = 2
+		FIRE_ACTION_BURN_WOOD, // 0b00000011 = 3
+		FIRE_ACTION_MOVE_FIRE, // 0b00000100 = 4
+		FIRE_ACTION_BURN_WOOD, // 0b00000101 = 5
+		FIRE_ACTION_EVAPORATE, // 0b00000110 = 6
+		FIRE_ACTION_BURN_WOOD, // 0b00000111 = 7
+	};
+
+	fire_action FireAction = FIRE_ACTION_NO_ACTION;
+
+	s32 SwapX = X;
+	s32 SwapY = Y;
+	s32 Speed = 0;
+	s32 Direction = GetDirection();
+
+	if (!Cell(X, Y).FramesToLive)
+	{
+		Cell(X, Y).Type = BLANK;
+		Cell(X, Y).ColorModification = 0x00;
+	}
+
+	Speed = Min(4, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
+	for (s32 S = 1; S <= Speed; S += 1)
+	{
+		s32 Y0 = Y+S;
+
+		s32 A0 = (Cell(X, Y0).Type == WOOD) << 0;
+		s32 A1 = (Cell(X, Y0).Type == WATER) << 1;
+		s32 A2 = (Cell(X, Y0).Type <= GAS) << 2;
+		s32 AN = A0 | A1 | A2;
+
+		if (AN)
+		{
+			FireAction = FireActionTable[AN];
+			SwapY = Y0;
+		}
+
+		Speed *= FireAction != FIRE_ACTION_NO_ACTION;
+	}
+
+	Speed = (SwapY == Y) * Min(4, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
+	for (s32 S = 1; S <= Speed; S += 1)
+	{
+		s32 X1 = X+S*Direction;
+		s32 X2 = X-S*Direction;
+
+		s32 B0 = (Cell(X1, Y).Type == WOOD) << 0;
+		s32 B1 = (Cell(X1, Y).Type == WATER) << 1;
+		s32 B2 = (Cell(X1, Y).Type <= GAS) << 2;
+		s32 BN = B0 | B1 | B2;
+		s32 C0 = (Cell(X2, Y).Type == WOOD) << 0;
+		s32 C1 = (Cell(X2, Y).Type == WATER) << 1;
+		s32 C2 = (Cell(X2, Y).Type <= GAS) << 2;
+		s32 CN = C0 | C1 | C2;
+
+		FireAction = CN ? FireActionTable[CN] : FireAction;
+		FireAction = BN ? FireActionTable[BN] : FireAction;
+		SwapX = CN ? X2 : SwapX;
+		SwapX = BN ? X1 : SwapX;
+
+		Speed *= FireAction != FIRE_ACTION_NO_ACTION;
+	}
+
+	switch (FireAction)
+	{
+		case FIRE_ACTION_NO_ACTION:
+		{
+			Cell(X, Y).FramesToLive -= 1;
+			Cell(X, Y).Updated = true;
+			break;
+		}
+		case FIRE_ACTION_BURN_WOOD:
+		{
+			Cell(X, Y).FramesToLive += 2;
+			Cell(X, Y).Updated = true;
+			Cell(SwapX, SwapY).Type = FIRE;
+			Cell(SwapX, SwapY).Updated = true;
+			Cell(SwapX, SwapY).FramesToLive = 128;
+			break;
+		}
+		case FIRE_ACTION_EVAPORATE:
+		{
+			Cell(X, Y).Type = GAS;
+			Cell(X, Y).Updated = true;
+			Cell(X, Y).ColorModification = (u8)RandomU32InRange(0x00, SMOKE_COLOR_MODIFICAITON);
+			Cell(X, Y).FramesToLive = 255;
+			Cell(SwapX, SwapY).Type = BLANK;
+			Cell(SwapX, SwapY).ColorModification = 0x00;
+		}
+		case FIRE_ACTION_MOVE_FIRE:
+		{
+			Cell(X, Y).FramesToLive -= 1;
+			Swap(Cell(X, Y), Cell(SwapX, SwapY));
+			Cell(X, Y).Updated = true;
+			Cell(SwapX, SwapY).Updated = true;
+		}
+	}
 }
 
 static void
@@ -145,95 +263,6 @@ TransitionSandCell(s32 X, s32 Y)
 	Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
 	Cell(SwapX, SwapY).Speed = AddSpeedSaturated(Cell(SwapX, SwapY).Speed);
 	Cell(SwapX, SwapY).Updated = true;
-}
-
-static void
-TransitionFireCell(s32 X, s32 Y)
-{
-	enum { SMOKE_COLOR_MODIFICAITON = 0x03 };
-
-	Cell(X, Y).FramesToLive -= 1;
-
-	s32 Direction = GetDirection();
-	if (Cell(X, Y).FramesToLive == 0)
-	{
-		Cell(X, Y).Type = BLANK;
-		Cell(X, Y).Updated = true;
-		Cell(X, Y).ColorModification = 0x00;
-	}
-	else if (Cell(X, Y+1).Type == WOOD)
-	{
-		Cell(X, Y+1).Type = FIRE;
-		Cell(X, Y+1).FramesToLive += 2;
-		Cell(X, Y+1).Updated = true;
-	}
-	else if (Cell(X-Direction, Y).Type == WOOD)
-	{
-		Cell(X-Direction, Y).Type = FIRE;
-		Cell(X-Direction, Y).FramesToLive += 2;
-		Cell(X-Direction, Y).Updated = Cell(X, Y).Updated = true;
-	}
-	else if (Cell(X+Direction, Y).Type == WOOD)
-	{
-		Cell(X+Direction, Y).Type = FIRE;
-		Cell(X+Direction, Y).FramesToLive += 2;
-		Cell(X+Direction, Y).Updated = Cell(X, Y).Updated = true;
-	}
-	else if (Cell(X, Y+1).Type == WATER)
-	{
-		Cell(X, Y).Type = GAS;
-		Cell(X, Y).ColorModification = (u8)RandomU32InRange(0x00, SMOKE_COLOR_MODIFICAITON);
-		Cell(X, Y).FramesToLive = 255;
-		Cell(X, Y).Updated = true;
-		Cell(X, Y+1).Type = BLANK;
-		Cell(X, Y+1).Updated = true;
-		Cell(X, Y+1).ColorModification = 0x00;
-	}
-	else if (Cell(X-Direction, Y).Type == WATER)
-	{
-		Cell(X, Y).Type = GAS;
-		Cell(X, Y).ColorModification = (u8)RandomU32InRange(0x00, SMOKE_COLOR_MODIFICAITON);
-		Cell(X, Y).FramesToLive = 255;
-		Cell(X, Y).Updated = true;
-		Cell(X-Direction, Y).Type = BLANK;
-		Cell(X-Direction, Y).Updated = true;
-		Cell(X-Direction, Y).ColorModification = 0x00;
-	}
-	else if (Cell(X+Direction, Y).Type == WATER)
-	{
-		Cell(X, Y).Type = GAS;
-		Cell(X, Y).ColorModification = (u8)RandomU32InRange(0x00, SMOKE_COLOR_MODIFICAITON);
-		Cell(X, Y).FramesToLive = 255;
-		Cell(X, Y).Updated = true;
-		Cell(X+Direction, Y).Type = BLANK;
-		Cell(X+Direction, Y).Updated = true;
-		Cell(X+Direction, Y).ColorModification = 0x00;
-	}
-	else if (Cell(X, Y+1).Type <= GAS)
-	{
-		Swap(Cell(X, Y), Cell(X, Y+1));
-		Cell(X, Y).Updated = Cell(X+1, Y+1).Updated = true;
-	}
-	else if (Cell(X-Direction, Y).Type <= GAS)
-	{
-		Swap(Cell(X, Y), Cell(X-Direction, Y));
-		Cell(X, Y).Updated = Cell(X-Direction, Y).Updated = true;
-	}
-	else if (Cell(X+Direction, Y).Type <= GAS)
-	{
-		Swap(Cell(X, Y), Cell(X+Direction, Y));
-		Cell(X, Y).Updated = Cell(X+Direction, Y).Updated = true;
-	}
-
-	// NOTE(ariel) Spawn smoke above with random chance.
-	if (Cell(X, Y-1).Type == BLANK)
-	{
-		u8 Chance = RandomU32InRange(0, 128) == 0;
-		Cell(X, Y-1).Type = GAS * Chance;
-		Cell(X, Y-1).ColorModification = (u8)RandomU32InRange(0x00, SMOKE_COLOR_MODIFICAITON);
-		Cell(X, Y-1).FramesToLive = 16;
-		Cell(X, Y-1).Updated = true;
-	}
 }
 
 static void

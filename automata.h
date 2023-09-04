@@ -14,13 +14,13 @@ enum
 typedef enum cell_type cell_type;
 enum cell_type
 {
-	// NOTE(ariel) Sort cell type by density (except fire).
+	// NOTE(ariel) Sort cell type by density.
 	BLANK,
 	GAS,
+	FIRE,
 	WATER,
 	SAND,
 	WOOD,
-	FIRE,
 	HOLY_BOUNDARY,
 	CELL_TYPE_COUNT,
 } __attribute__((packed));
