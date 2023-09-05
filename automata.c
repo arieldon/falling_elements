@@ -31,7 +31,7 @@ TransitionGasCell(s32 X, s32 Y)
 {
 	s32 SwapX = X;
 	s32 SwapY = Y;
-	s32 Speed = 0;
+	s32 Speed = Min(4, Min(X_CELL_COUNT-X, Y));
 	s32 Direction = GetDirection();
 
 	if (!Cell(X, Y).FramesToLive)
@@ -39,7 +39,6 @@ TransitionGasCell(s32 X, s32 Y)
 		Cell(X, Y).Type = BLANK;
 	}
 
-	Speed = Min(4, Min(X_CELL_COUNT-X, Y));
 	for (s32 S = 1; S <= Speed; S += 1)
 	{
 		s32 Y0 = Y-S;
@@ -55,12 +54,12 @@ TransitionGasCell(s32 X, s32 Y)
 		SwapY = A ? Y0 : SwapY;
 		SwapX = A ? X : SwapX;
 
-		Speed *= A | (B & C);
+		Speed *= A | B | C;
 	}
 
 	Swap(Cell(X, Y), Cell(SwapX, SwapY));
-	Cell(SwapX, SwapY).FramesToLive -= 1;
 	Cell(X, Y).Type |= UPDATED;
+	Cell(SwapX, SwapY).FramesToLive -= 1;
 	Cell(SwapX, SwapY).Type |= UPDATED;
 }
 
@@ -183,10 +182,9 @@ TransitionWaterCell(s32 X, s32 Y)
 {
 	s32 SwapX = X;
 	s32 SwapY = Y;
-	s32 Speed = 0;
+	s32 Speed = Min(Cell(X, Y).Speed, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
 	s32 Direction = GetDirection();
 
-	Speed = Min(Cell(X, Y).Speed, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
 	for (s32 S = 1; S <= Speed; S += 1)
 	{
 		s32 Y0 = Y+S;
@@ -202,7 +200,7 @@ TransitionWaterCell(s32 X, s32 Y)
 		SwapY = A ? Y0 : SwapY;
 		SwapX = A ? X : SwapX;
 
-		Speed *= A | (B & C);
+		Speed *= A | B | C;
 	}
 
 	Swap(Cell(X, Y), Cell(SwapX, SwapY));
@@ -214,8 +212,8 @@ TransitionSandCell(s32 X, s32 Y)
 {
 	s32 SwapX = X;
 	s32 SwapY = Y;
-
 	s32 Speed = Min(Cell(X, Y).Speed, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
+
 	for (s32 S = 1; S <= Speed; S += 1)
 	{
 		s32 YN = Y+S;
@@ -236,7 +234,7 @@ TransitionSandCell(s32 X, s32 Y)
 
 		// NOTE(ariel) Some obstruction (more dense cell) may block this cell from
 		// further movement.
-		Speed *= A & B & C;
+		Speed *= A | B | C;
 	}
 
 	Swap(Cell(X, Y), Cell(SwapX, SwapY));
