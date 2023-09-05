@@ -27,6 +27,8 @@ enum cell_type
 	HOLY_BOUNDARY,
 	CELL_TYPE_COUNT,
 
+	// NOTE(ariel) Treat these as negative values (signed) to avoid inflating the
+	// density of cells.
 	UPDATED_GAS = GAS | UPDATED,
 	UPDATED_FIRE = FIRE | UPDATED,
 } __attribute__((packed));

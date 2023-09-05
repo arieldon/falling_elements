@@ -46,9 +46,9 @@ TransitionGasCell(s32 X, s32 Y)
 		s32 X1 = X+S*Direction;
 		s32 X2 = X-S*Direction;
 
-		b32 A = Cell(X, Y0).Type < GAS;
-		b32 B = Cell(X1, Y).Type < GAS;
-		b32 C = Cell(X2, Y).Type < GAS;
+		b32 A = (s8)Cell(X, Y0).Type < GAS;
+		b32 B = (s8)Cell(X1, Y).Type < GAS;
+		b32 C = (s8)Cell(X2, Y).Type < GAS;
 
 		SwapX = C ? X2 : SwapX;
 		SwapX = B ? X1 : SwapX;
@@ -109,9 +109,9 @@ TransitionFireCell(s32 X, s32 Y)
 	{
 		s32 Y0 = Y+S;
 
-		s32 A0 = (Cell(X, Y0).Type == WOOD) << 0;
-		s32 A1 = (Cell(X, Y0).Type == WATER) << 1;
-		s32 A2 = (Cell(X, Y0).Type <= GAS) << 2;
+		s32 A0 = ((s8)Cell(X, Y0).Type == WOOD) << 0;
+		s32 A1 = ((s8)Cell(X, Y0).Type == WATER) << 1;
+		s32 A2 = ((s8)Cell(X, Y0).Type <= GAS) << 2;
 		s32 AN = A0 | A1 | A2;
 
 		if (AN)
@@ -129,13 +129,13 @@ TransitionFireCell(s32 X, s32 Y)
 		s32 X1 = X+S*Direction;
 		s32 X2 = X-S*Direction;
 
-		s32 B0 = (Cell(X1, Y).Type == WOOD) << 0;
-		s32 B1 = (Cell(X1, Y).Type == WATER) << 1;
-		s32 B2 = (Cell(X1, Y).Type <= GAS) << 2;
+		s32 B0 = ((s8)Cell(X1, Y).Type == WOOD) << 0;
+		s32 B1 = ((s8)Cell(X1, Y).Type == WATER) << 1;
+		s32 B2 = ((s8)Cell(X1, Y).Type <= GAS) << 2;
 		s32 BN = B0 | B1 | B2;
-		s32 C0 = (Cell(X2, Y).Type == WOOD) << 0;
-		s32 C1 = (Cell(X2, Y).Type == WATER) << 1;
-		s32 C2 = (Cell(X2, Y).Type <= GAS) << 2;
+		s32 C0 = ((s8)Cell(X2, Y).Type == WOOD) << 0;
+		s32 C1 = ((s8)Cell(X2, Y).Type == WATER) << 1;
+		s32 C2 = ((s8)Cell(X2, Y).Type <= GAS) << 2;
 		s32 CN = C0 | C1 | C2;
 
 		FireAction = CN ? FireActionTable[CN] : FireAction;
@@ -193,9 +193,9 @@ TransitionWaterCell(s32 X, s32 Y)
 		s32 X1 = X+S*Direction;
 		s32 X2 = X-S*Direction;
 
-		b32 A = Cell(X, Y0).Type < WATER;
-		b32 B = Cell(X1, Y).Type < WATER;
-		b32 C = Cell(X2, Y).Type < WATER;
+		b32 A = (s8)Cell(X, Y0).Type < WATER;
+		b32 B = (s8)Cell(X1, Y).Type < WATER;
+		b32 C = (s8)Cell(X2, Y).Type < WATER;
 
 		SwapX = C ? X2 : SwapX;
 		SwapX = B ? X1 : SwapX;
@@ -223,9 +223,11 @@ TransitionSandCell(s32 X, s32 Y)
 		s32 X1 = X-S;
 		s32 X2 = X+S;
 
-		b32 A = Cell(X0, YN).Type < SAND;
-		b32 B = Cell(X1, YN).Type < SAND;
-		b32 C = Cell(X2, YN).Type < SAND;
+		// NOTE(ariel) Is there a way to specify default signedness of an enum upon
+		// definition?
+		b32 A = (s8)Cell(X0, YN).Type < SAND;
+		b32 B = (s8)Cell(X1, YN).Type < SAND;
+		b32 C = (s8)Cell(X2, YN).Type < SAND;
 
 		SwapY = A | B | C ? YN : SwapY;
 		SwapX = C ? X2 : SwapX;
