@@ -37,30 +37,25 @@ TransitionGasCell(s32 X, s32 Y)
 	if (!Cell(X, Y).FramesToLive)
 	{
 		Cell(X, Y).Type = BLANK;
-		Cell(X, Y).ColorModification = 0x00;
 	}
 
-	Speed = Min(4, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
+	Speed = Min(4, Min(X_CELL_COUNT-X, Y));
 	for (s32 S = 1; S <= Speed; S += 1)
 	{
 		s32 Y0 = Y-S;
-		b32 A = Cell(X, Y0).Type < GAS;
-		SwapY = A ? Y0 : SwapY;
-		Speed *= A;
-	}
-
-	Speed = (SwapY == Y) * Min(4, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
-	for (s32 S = 1; S <= Speed; S += 1)
-	{
 		s32 X1 = X+S*Direction;
 		s32 X2 = X-S*Direction;
 
+		b32 A = Cell(X, Y0).Type < GAS;
 		b32 B = Cell(X1, Y).Type < GAS;
 		b32 C = Cell(X2, Y).Type < GAS;
+
 		SwapX = C ? X2 : SwapX;
 		SwapX = B ? X1 : SwapX;
+		SwapY = A ? Y0 : SwapY;
+		SwapX = A ? X : SwapX;
 
-		Speed *= B & C;
+		Speed *= A | (B & C);
 	}
 
 	Swap(Cell(X, Y), Cell(SwapX, SwapY));
@@ -195,23 +190,19 @@ TransitionWaterCell(s32 X, s32 Y)
 	for (s32 S = 1; S <= Speed; S += 1)
 	{
 		s32 Y0 = Y+S;
-		b32 A = Cell(X, Y0).Type < WATER;
-		SwapY = A ? Y0 : SwapY;
-		Speed *= A;
-	}
-
-	Speed = (SwapY == Y) * Min(4, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
-	for (s32 S = 1; S <= Speed; S += 1)
-	{
 		s32 X1 = X+S*Direction;
 		s32 X2 = X-S*Direction;
 
+		b32 A = Cell(X, Y0).Type < WATER;
 		b32 B = Cell(X1, Y).Type < WATER;
 		b32 C = Cell(X2, Y).Type < WATER;
+
 		SwapX = C ? X2 : SwapX;
 		SwapX = B ? X1 : SwapX;
+		SwapY = A ? Y0 : SwapY;
+		SwapX = A ? X : SwapX;
 
-		Speed *= B & C;
+		Speed *= A | (B & C);
 	}
 
 	Swap(Cell(X, Y), Cell(SwapX, SwapY));
