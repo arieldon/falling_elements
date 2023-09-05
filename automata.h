@@ -11,18 +11,24 @@ enum
 	X_CELL_COUNT_WITH_PADDING = X_CELL_COUNT + 2,
 };
 
+enum { UPDATED = 0x80 };
+
+// TODO(ariel) Make gas flammable?
 typedef enum cell_type cell_type;
 enum cell_type
 {
 	// NOTE(ariel) Sort cell type by density.
 	BLANK,
-	GAS,
 	FIRE,
+	GAS,
 	WATER,
 	SAND,
 	WOOD,
 	HOLY_BOUNDARY,
 	CELL_TYPE_COUNT,
+
+	UPDATED_GAS = GAS | UPDATED,
+	UPDATED_FIRE = FIRE | UPDATED,
 } __attribute__((packed));
 StaticAssert(sizeof(cell_type) == 1);
 
@@ -41,12 +47,11 @@ typedef struct cell cell;
 struct cell
 {
 	cell_type Type;
-	u8 Updated;
 	u8 ColorModification;
 	union
 	{
-		u8 FramesToLive;
-		s8 Speed;
+		u16 FramesToLive;
+		u16 Speed;
 	};
 };
 StaticAssert(sizeof(cell) == 4);

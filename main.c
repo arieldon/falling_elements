@@ -212,6 +212,14 @@ main(void)
 		{
 			for (s32 X = CELL_START; X <= X_CELL_COUNT; X += 1)
 			{
+				Cell(X, Y).Type &= ~UPDATED;
+			}
+		}
+
+		for (s32 Y = CELL_START; Y <= Y_CELL_COUNT; Y += 1)
+		{
+			for (s32 X = CELL_START; X <= X_CELL_COUNT; X += 1)
+			{
 				if (Cell(X, Y).Type != BLANK)
 				{
 					s32 PixelY = (Y-CELL_START) * CELL_SIZE;
@@ -234,14 +242,6 @@ main(void)
 		}
 
 		DrawBrush();
-
-		for (s32 Y = CELL_START; Y <= Y_CELL_COUNT; Y += 1)
-		{
-			for (s32 X = CELL_START; X <= X_CELL_COUNT; X += 1)
-			{
-				Cell(X, Y).Updated = false;
-			}
-		}
 
 		PresentBuffer();
 

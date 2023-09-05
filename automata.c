@@ -1,19 +1,13 @@
 static void
 TransitionCell(s32 X, s32 Y)
 {
-	if (!Cell(X, Y).Updated)
+	switch (Cell(X, Y).Type)
 	{
-		switch (Cell(X, Y).Type)
-		{
-			case BLANK: break;
-			case GAS: TransitionGasCell(X, Y); break;
-			case FIRE: TransitionFireCell(X, Y); break;
-			case WATER: TransitionWaterCell(X, Y); break;
-			case SAND: TransitionSandCell(X, Y); break;
-			case WOOD: break;
-			case HOLY_BOUNDARY: break;
-			case CELL_TYPE_COUNT: break;
-		}
+		case GAS: TransitionGasCell(X, Y); break;
+		case FIRE: TransitionFireCell(X, Y); break;
+		case WATER: TransitionWaterCell(X, Y); break;
+		case SAND: TransitionSandCell(X, Y); break;
+		default: break;
 	}
 }
 
@@ -25,10 +19,10 @@ GetDirection(void)
 	return Result;
 }
 
-static inline s8
-AddSpeedSaturated(s8 Speed)
+static inline u16
+AddSpeedSaturated(u16 Speed)
 {
-	s8 Result = Min(8, Speed+1);
+	u16 Result = Min(8, Speed+1);
 	return Result;
 }
 
@@ -43,7 +37,6 @@ TransitionGasCell(s32 X, s32 Y)
 	if (!Cell(X, Y).FramesToLive)
 	{
 		Cell(X, Y).Type = BLANK;
-		Cell(X, Y).Updated = true;
 		Cell(X, Y).ColorModification = 0x00;
 	}
 
@@ -71,9 +64,9 @@ TransitionGasCell(s32 X, s32 Y)
 	}
 
 	Swap(Cell(X, Y), Cell(SwapX, SwapY));
-	Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
 	Cell(SwapX, SwapY).FramesToLive -= 1;
-	Cell(SwapX, SwapY).Updated = true;
+	Cell(X, Y).Type |= UPDATED;
+	Cell(SwapX, SwapY).Type |= UPDATED;
 }
 
 static void
@@ -163,33 +156,29 @@ TransitionFireCell(s32 X, s32 Y)
 		case FIRE_ACTION_NO_ACTION:
 		{
 			Cell(X, Y).FramesToLive -= 1;
-			Cell(X, Y).Updated = true;
+			Cell(X, Y).Type = UPDATED_FIRE;
 			break;
 		}
 		case FIRE_ACTION_BURN_WOOD:
 		{
 			Cell(X, Y).FramesToLive += 2;
-			Cell(X, Y).Updated = true;
-			Cell(SwapX, SwapY).Type = FIRE;
-			Cell(SwapX, SwapY).Updated = true;
-			Cell(SwapX, SwapY).FramesToLive = 128;
+			Cell(X, Y).Type = Cell(SwapX, SwapY).Type = UPDATED_FIRE;
+			Cell(SwapX, SwapY).FramesToLive = 256;
 			break;
 		}
 		case FIRE_ACTION_EVAPORATE:
 		{
-			Cell(X, Y).Type = GAS;
-			Cell(X, Y).Updated = true;
+			Cell(X, Y).Type = UPDATED_GAS;
 			Cell(X, Y).ColorModification = (u8)RandomU32InRange(0x00, SMOKE_COLOR_MODIFICAITON);
-			Cell(X, Y).FramesToLive = 255;
+			Cell(X, Y).FramesToLive = 512;
 			Cell(SwapX, SwapY).Type = BLANK;
-			Cell(SwapX, SwapY).ColorModification = 0x00;
 		}
 		case FIRE_ACTION_MOVE_FIRE:
 		{
 			Cell(X, Y).FramesToLive -= 1;
 			Swap(Cell(X, Y), Cell(SwapX, SwapY));
-			Cell(X, Y).Updated = true;
-			Cell(SwapX, SwapY).Updated = true;
+			Cell(X, Y).Type |= UPDATED;
+			Cell(SwapX, SwapY).Type |= UPDATED;
 		}
 	}
 }
@@ -226,9 +215,7 @@ TransitionWaterCell(s32 X, s32 Y)
 	}
 
 	Swap(Cell(X, Y), Cell(SwapX, SwapY));
-	Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
 	Cell(SwapX, SwapY).Speed = AddSpeedSaturated(Cell(SwapX, SwapY).Speed);
-	Cell(SwapX, SwapY).Updated = true;
 }
 
 static void
@@ -260,9 +247,7 @@ TransitionSandCell(s32 X, s32 Y)
 	}
 
 	Swap(Cell(X, Y), Cell(SwapX, SwapY));
-	Cell(X, Y).Updated = Cell(X, Y).Type == BLANK;
 	Cell(SwapX, SwapY).Speed = AddSpeedSaturated(Cell(SwapX, SwapY).Speed);
-	Cell(SwapX, SwapY).Updated = true;
 }
 
 static void
@@ -293,7 +278,7 @@ SpawnCells(s32 X, s32 Y)
 					cell_type NewType = (cell_type)(Creating * Chance);
 					Cell(CellX, CellY).Type = NewType;
 					Cell(CellX, CellY).ColorModification = (u8)RandomU32InRange(0x00, ColorModifications[Creating]);
-					Cell(CellX, CellY).Speed = 1 + 127*(Creating == GAS | Creating == FIRE);
+					Cell(CellX, CellY).Speed = 1 + 511*(Creating == GAS | Creating == FIRE);
 				}
 			}
 		}
