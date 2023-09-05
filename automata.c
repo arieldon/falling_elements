@@ -279,7 +279,7 @@ SpawnCells(s32 X, s32 Y)
 
 	if (Creating != BLANK)
 	{
-		s32 Radius = 4;
+		s32 Radius = 8;
 		s32 RadiusSquared = Radius*Radius;
 		for (s32 CircleY = -Radius; CircleY <= Radius; CircleY += 1)
 		{
