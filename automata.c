@@ -277,35 +277,26 @@ SpawnCells(s32 X, s32 Y)
 		[FIRE] = 0x80,
 	};
 
-	if (Creating != BLANK)
+	s32 Radius = 8;
+	s32 RadiusSquared = Radius*Radius;
+	for (s32 CircleY = -Radius; CircleY <= Radius; CircleY += 1)
 	{
-		s32 Radius = 8;
-		s32 RadiusSquared = Radius*Radius;
-		for (s32 CircleY = -Radius; CircleY <= Radius; CircleY += 1)
+		for (s32 CircleX = -Radius; CircleX <= Radius; CircleX += 1)
 		{
-			for (s32 CircleX = -Radius; CircleX <= Radius; CircleX += 1)
+			if (CircleY*CircleY + CircleX*CircleX <= RadiusSquared)
 			{
-				if (CircleY*CircleY + CircleX*CircleX <= RadiusSquared)
+				u32 CellY = Clamp(CircleY+Y, 0, Y_CELL_COUNT);
+				u32 CellX = Clamp(CircleX+X, 0, X_CELL_COUNT);
+				if (Creating == BLANK | Cell(CellX, CellY).Type == BLANK)
 				{
-					u32 CellY = Clamp(CircleY+Y, 0, Y_CELL_COUNT);
-					u32 CellX = Clamp(CircleX+X, 0, X_CELL_COUNT);
-					if (Cell(CellX, CellY).Type == BLANK)
-					{
-						b32 Chance = Creating == WOOD || RandomU32InRange(0, 4) == 0;
-						cell_type NewType = (cell_type)(Creating * Chance);
-						Cell(CellX, CellY).Type = NewType;
-						Cell(CellX, CellY).ColorModification = (u8)RandomU32InRange(0x00, ColorModifications[Creating]);
-						Cell(CellX, CellY).Speed = 1 + 127*(Creating == GAS | Creating == FIRE);
-					}
+					b32 Chance = Creating == WOOD | RandomU32InRange(0, 4) == 0;
+					cell_type NewType = (cell_type)(Creating * Chance);
+					Cell(CellX, CellY).Type = NewType;
+					Cell(CellX, CellY).ColorModification = (u8)RandomU32InRange(0x00, ColorModifications[Creating]);
+					Cell(CellX, CellY).Speed = 1 + 127*(Creating == GAS | Creating == FIRE);
 				}
 			}
 		}
-	}
-	else
-	{
-		// NOTE(ariel) Spawn blanks to erase.
-		Cell(X, Y).Type = Creating;
-		Cell(X, Y).ColorModification = 0x00;
 	}
 }
 

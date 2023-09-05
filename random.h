@@ -65,7 +65,8 @@ RandomU32(void)
 static inline u32
 RandomU32InRange(u32 Min, u32 Max)
 {
-	Assert(Min < Max);
+	// NOTE(ariel) Is it user error if Min == Max?
+	Assert(Min <= Max);
 	u32 Result = (RandomU32() % ((Max + 1) - Min)) + Min;
 	Assert(Min <= Result);
 	Assert(Result <= Max);
