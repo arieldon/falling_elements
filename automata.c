@@ -31,7 +31,7 @@ TransitionGasCell(s32 X, s32 Y)
 {
 	s32 SwapX = X;
 	s32 SwapY = Y;
-	s32 Speed = Min(4, Min(X_CELL_COUNT-X, Y));
+	s32 Speed = 0;
 	s32 Direction = GetDirection();
 
 	if (!Cell(X, Y).FramesToLive)
@@ -39,28 +39,30 @@ TransitionGasCell(s32 X, s32 Y)
 		Cell(X, Y).Type = BLANK;
 	}
 
+	Speed = Min(4, 1+Min(X_CELL_COUNT-X, Y));
 	for (s32 S = 1; S <= Speed; S += 1)
 	{
 		s32 Y0 = Y-S;
 		s32 X1 = X+S*Direction;
 		s32 X2 = X-S*Direction;
 
-		b32 A = (s8)Cell(X, Y0).Type < GAS;
-		b32 B = (s8)Cell(X1, Y).Type < GAS;
-		b32 C = (s8)Cell(X2, Y).Type < GAS;
+		b32 A = Cell(X, Y0).Type < GAS;
+		b32 B = Cell(X1, Y).Type < GAS;
+		b32 C = Cell(X2, Y).Type < GAS;
 
 		SwapX = C ? X2 : SwapX;
+		SwapY = C ? Y : SwapY;
 		SwapX = B ? X1 : SwapX;
-		SwapY = A ? Y0 : SwapY;
+		SwapY = B ? Y : SwapY;
 		SwapX = A ? X : SwapX;
+		SwapY = A ? Y0 : SwapY;
 
-		Speed *= A | B | C;
+		Speed *= A & B & C;
 	}
 
-	Swap(Cell(X, Y), Cell(SwapX, SwapY));
 	Cell(X, Y).Type |= UPDATED;
-	Cell(SwapX, SwapY).FramesToLive -= 1;
-	Cell(SwapX, SwapY).Type |= UPDATED;
+	Cell(X, Y).FramesToLive -= 1;
+	Swap(Cell(X, Y), Cell(SwapX, SwapY));
 }
 
 static void
@@ -182,25 +184,30 @@ TransitionWaterCell(s32 X, s32 Y)
 {
 	s32 SwapX = X;
 	s32 SwapY = Y;
-	s32 Speed = Min(Cell(X, Y).Speed, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
+	s32 Speed = 0;
 	s32 Direction = GetDirection();
 
+	Speed = Min(4, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
 	for (s32 S = 1; S <= Speed; S += 1)
 	{
 		s32 Y0 = Y+S;
+		b32 A = Cell(X, Y0).Type < WATER;
+		SwapY = A ? Y0 : SwapY;
+		Speed *= A;
+	}
+
+	Speed = (SwapY == Y) * Min(4, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
+	for (s32 S = 1; S <= Speed; S += 1)
+	{
 		s32 X1 = X+S*Direction;
 		s32 X2 = X-S*Direction;
 
-		b32 A = (s8)Cell(X, Y0).Type < WATER;
-		b32 B = (s8)Cell(X1, Y).Type < WATER;
-		b32 C = (s8)Cell(X2, Y).Type < WATER;
-
+		b32 B = Cell(X1, Y).Type < WATER;
+		b32 C = Cell(X2, Y).Type < WATER;
 		SwapX = C ? X2 : SwapX;
 		SwapX = B ? X1 : SwapX;
-		SwapY = A ? Y0 : SwapY;
-		SwapX = A ? X : SwapX;
 
-		Speed *= A | B | C;
+		Speed *= B & C;
 	}
 
 	Swap(Cell(X, Y), Cell(SwapX, SwapY));
