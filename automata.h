@@ -29,8 +29,12 @@ enum cell_type
 
 	// NOTE(ariel) Treat these as negative values (signed) to avoid inflating the
 	// density of cells.
-	UPDATED_GAS = GAS | UPDATED,
+	UPDATED_BLANK = BLANK | UPDATED,
 	UPDATED_FIRE = FIRE | UPDATED,
+	UPDATED_GAS = GAS | UPDATED,
+	UPDATED_WATER = WATER | UPDATED,
+	UPDATED_SAND = SAND | UPDATED,
+	UPDATED_WOOD = WOOD | UPDATED,
 } __attribute__((packed));
 StaticAssert(sizeof(cell_type) == 1);
 
