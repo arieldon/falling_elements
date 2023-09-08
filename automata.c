@@ -60,8 +60,8 @@ TransitionGasCell(s32 X, s32 Y)
 		Speed *= A & B & C;
 	}
 
-	Cell(X, Y).Type |= UPDATED;
 	Cell(X, Y).FramesToLive -= 1;
+	Cell(X, Y).Type |= UPDATED;
 	Swap(Cell(X, Y), Cell(SwapX, SwapY));
 }
 
@@ -210,8 +210,8 @@ TransitionWaterCell(s32 X, s32 Y)
 		Speed *= B & C;
 	}
 
+	Cell(X, Y).Speed = AddSpeedSaturated(Cell(X, Y).Speed);
 	Swap(Cell(X, Y), Cell(SwapX, SwapY));
-	Cell(SwapX, SwapY).Speed = AddSpeedSaturated(Cell(SwapX, SwapY).Speed);
 }
 
 static void
@@ -244,8 +244,8 @@ TransitionSandCell(s32 X, s32 Y)
 		Speed *= A | B | C;
 	}
 
+	Cell(X, Y).Speed = AddSpeedSaturated(Cell(X, Y).Speed);
 	Swap(Cell(X, Y), Cell(SwapX, SwapY));
-	Cell(SwapX, SwapY).Speed = AddSpeedSaturated(Cell(SwapX, SwapY).Speed);
 }
 
 static void
