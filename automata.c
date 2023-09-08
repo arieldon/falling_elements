@@ -19,10 +19,10 @@ GetDirection(void)
 	return Result;
 }
 
-static inline u16
-AddSpeedSaturated(u16 Speed)
+static inline s16
+AddSpeedSaturated(s16 Speed)
 {
-	u16 Result = Min(8, Speed+1);
+	s16 Result = Min(8, Speed+1);
 	return Result;
 }
 
@@ -187,11 +187,11 @@ TransitionWaterCell(s32 X, s32 Y)
 	s32 Speed = 0;
 	s32 Direction = GetDirection();
 
-	Speed = Min(4, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
+	Speed = Min(Cell(X, Y).Speed, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
 	for (s32 S = 1; S <= Speed; S += 1)
 	{
 		s32 Y0 = Y+S;
-		b32 A = Cell(X, Y0).Type < WATER;
+		b32 A = (s8)Cell(X, Y0).Type < WATER;
 		SwapY = A ? Y0 : SwapY;
 		Speed *= A;
 	}
@@ -202,8 +202,8 @@ TransitionWaterCell(s32 X, s32 Y)
 		s32 X1 = X+S*Direction;
 		s32 X2 = X-S*Direction;
 
-		b32 B = Cell(X1, Y).Type < WATER;
-		b32 C = Cell(X2, Y).Type < WATER;
+		b32 B = (s8)Cell(X1, Y).Type < WATER;
+		b32 C = (s8)Cell(X2, Y).Type < WATER;
 		SwapX = C ? X2 : SwapX;
 		SwapX = B ? X1 : SwapX;
 

@@ -57,7 +57,7 @@ struct cell
 	union
 	{
 		u16 FramesToLive;
-		u16 Speed;
+		s16 Speed;
 	};
 };
 StaticAssert(sizeof(cell) == 4);
