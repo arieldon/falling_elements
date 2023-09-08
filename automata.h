@@ -13,13 +13,13 @@ enum
 
 enum { UPDATED = 0x80 };
 
-// TODO(ariel) Make gas flammable?
 typedef enum cell_type cell_type;
 enum cell_type
 {
 	// NOTE(ariel) Sort cell type by density.
 	BLANK,
 	FIRE,
+	SMOKE,
 	GAS,
 	WATER,
 	SAND,
@@ -32,6 +32,7 @@ enum cell_type
 	UPDATED_BLANK = BLANK | UPDATED,
 	UPDATED_FIRE = FIRE | UPDATED,
 	UPDATED_GAS = GAS | UPDATED,
+	UPDATED_SMOKE = SMOKE | UPDATED,
 	UPDATED_WATER = WATER | UPDATED,
 	UPDATED_SAND = SAND | UPDATED,
 	UPDATED_WOOD = WOOD | UPDATED,
@@ -42,6 +43,7 @@ u32 CellTypeColorTable[CELL_TYPE_COUNT] =
 {
 	[BLANK] = 0x00000000,
 	[GAS] = 0xff333333,
+	[SMOKE] = 0xff333333,
 	[WATER] = 0xffcc0000,
 	[SAND] = 0xff00ccff,
 	[WOOD] = 0xff38495c,
