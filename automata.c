@@ -39,26 +39,28 @@ TransitionGasCell(s32 X, s32 Y)
 	{
 		Cell(X, Y).Type = BLANK;
 	}
-
-	Speed = Min(4, 1+Min(X_CELL_COUNT-X, Y));
-	for (s32 S = 1; S <= Speed; S += 1)
+	else
 	{
-		s32 Y0 = Y-S;
-		s32 X1 = X+S*Direction;
-		s32 X2 = X-S*Direction;
+		Speed = Min(4, 1+Min(X_CELL_COUNT-X, Y));
+		for (s32 S = 1; S <= Speed; S += 1)
+		{
+			s32 Y0 = Y-S;
+			s32 X1 = X+S*Direction;
+			s32 X2 = X-S*Direction;
 
-		b32 A = Cell(X, Y0).Type < GAS;
-		b32 B = Cell(X1, Y).Type < GAS;
-		b32 C = Cell(X2, Y).Type < GAS;
+			b32 A = Cell(X, Y0).Type < GAS;
+			b32 B = Cell(X1, Y).Type < GAS;
+			b32 C = Cell(X2, Y).Type < GAS;
 
-		SwapX = C ? X2 : SwapX;
-		SwapY = C ? Y : SwapY;
-		SwapX = B ? X1 : SwapX;
-		SwapY = B ? Y : SwapY;
-		SwapX = A ? X : SwapX;
-		SwapY = A ? Y0 : SwapY;
+			SwapX = C ? X2 : SwapX;
+			SwapY = C ? Y : SwapY;
+			SwapX = B ? X1 : SwapX;
+			SwapY = B ? Y : SwapY;
+			SwapX = A ? X : SwapX;
+			SwapY = A ? Y0 : SwapY;
 
-		Speed *= A & B & C;
+			Speed *= A & B & C;
+		}
 	}
 
 	Cell(X, Y).FramesToLive -= 1;
