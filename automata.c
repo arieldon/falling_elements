@@ -68,6 +68,16 @@ TransitionGasCell(s32 X, s32 Y)
 	Swap(Cell(X, Y), Cell(SwapX, SwapY));
 }
 
+static inline u32
+GetIndexFromMask(u32 Mask)
+{
+	// NOTE(ariel) Divide by 4 (or shift by 2) to compress 32 bits to 8 bits,
+	// where each set of 4 bits act as a group.
+	u32 FirstSetBit = _lzcnt_u32(Mask);
+	u32 Index = FirstSetBit >> 2;
+	return Index;
+}
+
 static void
 TransitionFireCell(s32 X, s32 Y)
 {
@@ -81,11 +91,22 @@ TransitionFireCell(s32 X, s32 Y)
 	enum fire_action
 	{
 		FIRE_ACTION_NONE = 0 << 0,
-		FIRE_ACTION_SPREAD = 1 << 0,
+		FIRE_ACTION_MOVE = 1 << 0,
 		FIRE_ACTION_EVAPORATE = 1 << 1,
-		FIRE_ACTION_MOVE = 1 << 2,
+		FIRE_ACTION_SPREAD = 1 << 2,
 	};
-	fire_action FireAction = FIRE_ACTION_NONE;
+
+	static vector2s OffsetTable[8] =
+	{
+		{ .X = +0, .Y = +1, },
+		{ .X = -1, .Y = +1, },
+		{ .X = +1, .Y = +1, },
+		{ .X = -1, .Y = +0, },
+		{ .X = +1, .Y = +0, },
+		{ .X = +0, .Y = -1, },
+		{ .X = -1, .Y = -1, },
+		{ .X = +1, .Y = -1, },
+	};
 
 	if (!Cell(X, Y).FramesToLive)
 	{
@@ -93,144 +114,73 @@ TransitionFireCell(s32 X, s32 Y)
 	}
 	else
 	{
-		s32 SwapX = X;
-		s32 SwapY = Y;
-		s32 Speed = Min(MAXIMUM_FIRE_SPEED, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
+		s32 SwapX = 0;
+		s32 SwapY = 0;
+		s32 Speed = Min(MAXIMUM_FIRE_SPEED, 1+Min(X_CELL_COUNT-X, Min(Y, Y_CELL_COUNT-Y)));
 		s32 Direction = GetDirection();
+
+		vector2s Offset = {0};
+		fire_action FireAction = FIRE_ACTION_NONE;
+
+		__m256i Wood = _mm256_set1_epi32(WOOD);
+		__m256i Gas = _mm256_set1_epi32(GAS);
+		__m256i Water = _mm256_set1_epi32(WATER);
+		__m256i Fire = _mm256_set1_epi32(FIRE);
 
 		for (s32 S = 1, D = S*Direction; S <= Speed; S += 1, D = S*Direction)
 		{
-			if (Cell(X+0, Y+S).Type == WOOD | Cell(X+0, Y+S).Type == GAS)
+			__m256i CellTypes = _mm256_set_epi32(
+				Cell(X+D, Y+S).Type, Cell(X-D, Y+S).Type, Cell(X+0, Y+S).Type,
+				Cell(X+D, Y+0).Type, Cell(X-D, Y+0).Type,
+				Cell(X+D, Y-S).Type, Cell(X-D, Y-S).Type, Cell(X+0, Y-S).Type);
+
+			__m256i WoodComparison = _mm256_cmpeq_epi32(CellTypes, Wood);
+			__m256i GasComparison = _mm256_cmpeq_epi32(CellTypes, Gas);
+			__m256i SpreadComparison = _mm256_or_si256(WoodComparison, GasComparison);
+			__m256i EvaporateComparison = _mm256_cmpeq_epi32(CellTypes, Water);
+			__m256i MoveComparison = _mm256_cmpgt_epi32(CellTypes, Fire);
+
+			u32 SpreadMask = _mm256_movemask_epi8(SpreadComparison);
+			u32 EvaporateMask = _mm256_movemask_epi8(EvaporateComparison);
+			u32 MoveMask = ~_mm256_movemask_epi8(MoveComparison);
+
+			vector2s TentativeOffset = {0};
+			fire_action TentativeFireAction = {0};
+
+			if (SpreadMask)
 			{
-				SwapX = X+0;
-				SwapY = Y+S;
-				FireAction = FIRE_ACTION_SPREAD;
+				u32 Index = GetIndexFromMask(SpreadMask);
+				TentativeOffset = OffsetTable[Index];
+				TentativeFireAction = FIRE_ACTION_SPREAD;
 			}
-			else if (Cell(X-D, Y+S).Type == WOOD | Cell(X-D, Y+S).Type == GAS)
+			else if (EvaporateMask)
 			{
-				SwapX = X-D;
-				SwapY = Y+S;
-				FireAction = FIRE_ACTION_SPREAD;
+				u32 Index = GetIndexFromMask(EvaporateMask);
+				TentativeOffset = OffsetTable[Index];
+				TentativeFireAction = FIRE_ACTION_EVAPORATE;
 			}
-			else if (Cell(X+D, Y+S).Type == WOOD | Cell(X+D, Y+S).Type == GAS)
+			else if (MoveMask)
 			{
-				SwapX = X+D;
-				SwapY = Y+S;
-				FireAction = FIRE_ACTION_SPREAD;
-			}
-			else if (Cell(X-D, Y+0).Type == WOOD | Cell(X-D, Y+0).Type == GAS)
-			{
-				SwapX = X-D;
-				SwapY = Y+0;
-				FireAction = FIRE_ACTION_SPREAD;
-			}
-			else if (Cell(X+D, Y+0).Type == WOOD | Cell(X+D, Y+0).Type == GAS)
-			{
-				SwapX = X+D;
-				SwapY = Y+0;
-				FireAction = FIRE_ACTION_SPREAD;
-			}
-			else if (Cell(X+0, Y-S).Type == WOOD | Cell(X+0, Y-S).Type == GAS)
-			{
-				SwapX = X+0;
-				SwapY = Y-S;
-				FireAction = FIRE_ACTION_SPREAD;
-			}
-			else if (Cell(X-D, Y-S).Type == WOOD | Cell(X-D, Y-S).Type == GAS)
-			{
-				SwapX = X-D;
-				SwapY = Y-S;
-				FireAction = FIRE_ACTION_SPREAD;
-			}
-			else if (Cell(X+D, Y-S).Type == WOOD | Cell(X+D, Y-S).Type == GAS)
-			{
-				SwapX = X+D;
-				SwapY = Y-S;
-				FireAction = FIRE_ACTION_SPREAD;
-			}
-			else if ((Cell(X+0, Y+S).Type & ~UPDATED) == WATER)
-			{
-				SwapX = X+0;
-				SwapY = Y+S;
-				FireAction = FIRE_ACTION_EVAPORATE;
-			}
-			else if ((Cell(X-D, Y+S).Type & ~UPDATED) == WATER)
-			{
-				SwapX = X-D;
-				SwapY = Y+S;
-				FireAction = FIRE_ACTION_EVAPORATE;
-			}
-			else if ((Cell(X+D, Y+S).Type & ~UPDATED) == WATER)
-			{
-				SwapX = X+D;
-				SwapY = Y+S;
-				FireAction = FIRE_ACTION_EVAPORATE;
-			}
-			else if ((Cell(X-D, Y+0).Type & ~UPDATED) == WATER)
-			{
-				SwapX = X-D;
-				SwapY = Y+0;
-				FireAction = FIRE_ACTION_EVAPORATE;
-			}
-			else if ((Cell(X+D, Y+0).Type & ~UPDATED) == WATER)
-			{
-				SwapX = X+D;
-				SwapY = Y+0;
-				FireAction = FIRE_ACTION_EVAPORATE;
-			}
-			else if ((Cell(X+0, Y-S).Type & ~UPDATED) == WATER)
-			{
-				SwapX = X+0;
-				SwapY = Y-S;
-				FireAction = FIRE_ACTION_EVAPORATE;
-			}
-			else if ((Cell(X-D, Y-S).Type & ~UPDATED) == WATER)
-			{
-				SwapX = X-D;
-				SwapY = Y-S;
-				FireAction = FIRE_ACTION_EVAPORATE;
-			}
-			else if ((Cell(X+D, Y-S).Type & ~UPDATED) == WATER)
-			{
-				SwapX = X+D;
-				SwapY = Y-S;
-				FireAction = FIRE_ACTION_EVAPORATE;
-			}
-			else if (Cell(X+0, Y+S).Type < FIRE)
-			{
-				SwapX = X;
-				SwapY = Y+S;
-				FireAction = FIRE_ACTION_MOVE;
-			}
-			else if (Cell(X-D, Y+S).Type < FIRE)
-			{
-				SwapX = X-D;
-				SwapY = Y+S;
-				FireAction = FIRE_ACTION_MOVE;
-			}
-			else if (Cell(X+D, Y+S).Type < FIRE)
-			{
-				SwapX = X+D;
-				SwapY = Y+S;
-				FireAction = FIRE_ACTION_MOVE;
-			}
-			else if (Cell(X-D, Y+0).Type < FIRE)
-			{
-				SwapX = X-D;
-				SwapY = Y+0;
-				FireAction = FIRE_ACTION_MOVE;
-			}
-			else if (Cell(X+D, Y+0).Type < FIRE)
-			{
-				SwapX = X+D;
-				SwapY = Y+0;
-				FireAction = FIRE_ACTION_MOVE;
+				u32 Index = GetIndexFromMask(MoveMask);
+				TentativeOffset = OffsetTable[Index];
+				TentativeFireAction = FIRE_ACTION_MOVE;
 			}
 			else
 			{
 				break;
 			}
+
+			TentativeOffset.X *= D;
+			TentativeOffset.Y *= S;
+
+			s32 TentativeCellType = Cell(X+TentativeOffset.X, Y+TentativeOffset.Y).Type;
+			b32 Swappable = TentativeCellType <= WOOD & TentativeCellType != SAND;
+			FireAction = Swappable ? TentativeFireAction : FireAction;
+			Offset = Swappable ? TentativeOffset : Offset;
 		}
+
+		SwapX = X + Offset.X;
+		SwapY = Y + Offset.Y;
 
 		switch (FireAction)
 		{
@@ -242,7 +192,7 @@ TransitionFireCell(s32 X, s32 Y)
 			}
 			case FIRE_ACTION_SPREAD:
 			{
-				Cell(X, Y).FramesToLive += 2;
+				Cell(X, Y).FramesToLive += 1;
 				Cell(X, Y).Type = Cell(SwapX, SwapY).Type = UPDATED_FIRE;
 				Cell(SwapX, SwapY).FramesToLive = 256;
 				break;
