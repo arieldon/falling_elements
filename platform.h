@@ -16,7 +16,6 @@ struct input
 	s32 MousePositionX;
 	s32 MousePositionY;
 	s32 MouseDown;
-	s32 PreviousMouseDown;
 	b32 CursorIsInWindow;
 };
 static input Input;

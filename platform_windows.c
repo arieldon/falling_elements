@@ -25,7 +25,6 @@ WindowProcedure(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
 		case WM_RBUTTONDOWN:
 		case WM_MBUTTONDOWN:
 		{
-			Input.PreviousMouseDown = Input.MouseDown; // FIXME(ariel) Is that at all useful? It seems totally useless, even for the menu.
 			Input.MouseDown = true;
 			break;
 		}
@@ -33,7 +32,6 @@ WindowProcedure(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
 		case WM_RBUTTONUP:
 		case WM_MBUTTONUP:
 		{
-			Input.PreviousMouseDown = Input.MouseDown; // FIXME(ariel) Is that at all useful? It seems totally useless, even for the menu.
 			Input.MouseDown = false;
 			break;
 		}

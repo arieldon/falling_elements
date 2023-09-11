@@ -186,7 +186,6 @@ PlatformHandleInput(void)
 				XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
 				Input.MousePositionX = Event->x;
 				Input.MousePositionY = Event->y;
-				Input.PreviousMouseDown = Input.MouseDown;
 				Input.MouseDown = true;
 				break;
 			}
@@ -195,7 +194,6 @@ PlatformHandleInput(void)
 				XButtonEvent *Event = (XButtonEvent *)&GeneralEvent;
 				Input.MousePositionX = Event->x;
 				Input.MousePositionY = Event->y;
-				Input.PreviousMouseDown = Input.MouseDown;
 				Input.MouseDown = false;
 				break;
 			}
