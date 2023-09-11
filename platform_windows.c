@@ -5,7 +5,6 @@
 static HWND Win32Window;
 static HDC Win32DeviceContext;
 static HGLRC Win32GraphicsContext;
-static s32 CursorDisplayCount;
 
 static LRESULT CALLBACK
 WindowProcedure(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -169,19 +168,14 @@ PlatformSwapBuffers(void)
 }
 
 static void
-PlatformHideCursor(void)
+PlatformShowCursor(b32 ShouldShowCursor)
 {
-	if (CursorDisplayCount == 0)
+	static s32 CursorDisplayCount;
+	if (CursorDisplayCount == 0 & !ShouldShowCursor)
 	{
 		CursorDisplayCount = ShowCursor(false);
 	}
-	Assert(CursorDisplayCount == 0 | CursorDisplayCount == -1);
-}
-
-static void
-PlatformShowCursor(void)
-{
-	if (CursorDisplayCount == -1)
+	else if (CursorDisplayCount == -1 & ShouldShowCursor)
 	{
 		CursorDisplayCount = ShowCursor(true);
 	}

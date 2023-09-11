@@ -26,9 +26,7 @@ static void PlatformCloseWindow(void);
 
 static void PlatformSwapBuffers(void);
 
-// TODO(ariel) Compress into a single function that takes a boolean as input.
-static void PlatformHideCursor(void);
-static void PlatformShowCursor(void);
+static void PlatformShowCursor(b32 ShouldShowCursor);
 
 static void PlatformHandleInput(void);
 

@@ -127,7 +127,7 @@ PlatformOpenWindow(void)
 		InvisibleCursor = XCreatePixmapCursor(X11Display, PixmapID, PixmapID, &Color, &Color, 0, 0);
 		XFreePixmap(X11Display, PixmapID);
 
-		PlatformHideCursor();
+		PlatformShowCursor(false);
 	}
 
 	XFree(ViableFramebuffers);
@@ -151,15 +151,16 @@ PlatformSwapBuffers(void)
 }
 
 static void
-PlatformHideCursor(void)
+PlatformShowCursor(b32 ShouldShowCursor)
 {
-	XDefineCursor(X11Display, X11Window, InvisibleCursor);
-}
-
-static void
-PlatformShowCursor(void)
-{
-	XUndefineCursor(X11Display, X11Window);
+	if (ShouldShowCursor)
+	{
+		XUndefineCursor(X11Display, X11Window);
+	}
+	else
+	{
+		XDefineCursor(X11Display, X11Window, InvisibleCursor);
+	}
 }
 
 static void

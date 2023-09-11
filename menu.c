@@ -19,14 +19,7 @@ static void
 BeginMenu(void)
 {
 	MenuContext.MenuIsHot = MouseOverTarget(MenuContext.EntireMenu);
-	if (MenuContext.MenuIsHot)
-	{
-		PlatformShowCursor();
-	}
-	else
-	{
-		PlatformHideCursor();
-	}
+	PlatformShowCursor(MenuContext.MenuIsHot);
 
 	MenuContext.OffsetX = MenuContext.StartOffsetX = WINDOW_WIDTH - ICON_SIZE*MenuContext.MenuIsHot;
 	MenuContext.OffsetY = MenuContext.StartOffsetY = WINDOW_HEIGHT/2 - (ICON_SIZE+PADDING)/2 - MenuContext.Height/2;
