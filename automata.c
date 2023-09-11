@@ -27,13 +27,21 @@ AddSpeedSaturated(s16 Speed)
 	return Result;
 }
 
+static inline s32
+ClampSpeedToBounds(s32 X, s32 Y, s32 Speed)
+{
+	s32 Bound = 1 + Min(Min(X, X_CELL_COUNT-X), Min(Y, Y_CELL_COUNT-Y));
+	s32 Result = Min(Speed, Bound);
+	return Result;
+}
+
 static void
 TransitionGasCell(s32 X, s32 Y)
 {
+	enum { MAXIMUM_GAS_SPEED = 4 };
+
 	s32 SwapX = X;
 	s32 SwapY = Y;
-	s32 Speed = 0;
-	s32 Direction = GetDirection();
 
 	if (!Cell(X, Y).FramesToLive)
 	{
@@ -41,7 +49,9 @@ TransitionGasCell(s32 X, s32 Y)
 	}
 	else
 	{
-		Speed = Min(4, 1+Min(X_CELL_COUNT-X, Y));
+		s32 Direction = GetDirection();
+		s32 Speed = ClampSpeedToBounds(X, Y, MAXIMUM_GAS_SPEED);
+
 		for (s32 S = 1; S <= Speed; S += 1)
 		{
 			s32 Y0 = Y-S;
@@ -116,7 +126,7 @@ TransitionFireCell(s32 X, s32 Y)
 	{
 		s32 SwapX = 0;
 		s32 SwapY = 0;
-		s32 Speed = Min(MAXIMUM_FIRE_SPEED, 1+Min(X_CELL_COUNT-X, Min(Y, Y_CELL_COUNT-Y)));
+		s32 Speed = ClampSpeedToBounds(X, Y, MAXIMUM_FIRE_SPEED);
 		s32 Direction = GetDirection();
 
 		vector2s Offset = {0};
@@ -224,7 +234,7 @@ TransitionWaterCell(s32 X, s32 Y)
 	s32 Speed = 0;
 	s32 Direction = GetDirection();
 
-	Speed = Min(Cell(X, Y).Speed, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
+	Speed = ClampSpeedToBounds(X, Y, Cell(X, Y).Speed);
 	for (s32 S = 1; S <= Speed; S += 1)
 	{
 		s32 Y0 = Y+S;
@@ -233,7 +243,7 @@ TransitionWaterCell(s32 X, s32 Y)
 		Speed *= A;
 	}
 
-	Speed = (SwapY == Y) * Min(4, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
+	Speed = (SwapY == Y) * ClampSpeedToBounds(X, Y, Cell(X, Y).Speed);
 	for (s32 S = 1; S <= Speed; S += 1)
 	{
 		s32 X1 = X+S*Direction;
@@ -256,7 +266,7 @@ TransitionSandCell(s32 X, s32 Y)
 {
 	s32 SwapX = X;
 	s32 SwapY = Y;
-	s32 Speed = Min(Cell(X, Y).Speed, 1+Min(X_CELL_COUNT-X, Y_CELL_COUNT-Y));
+	s32 Speed = ClampSpeedToBounds(X, Y, Cell(X, Y).Speed);
 
 	for (s32 S = 1; S <= Speed; S += 1)
 	{
