@@ -3,6 +3,7 @@
 
 enum { TARGET_FRAMES_PER_SECOND = 60 };
 static const u64 NANOSECONDS_PER_SECOND = 1000000000l;
+static const u64 MILLISECONDS_PER_SECOND = 1000l;
 
 typedef struct vector2s vector2s;
 struct vector2s
@@ -36,8 +37,5 @@ static void InitializeRenderer(renderer_context *Context);
 static void TerminateRenderer(renderer_context Context);
 
 static void PresentBuffer(void);
-
-static inline u64 GetTime(void);
-static inline void SleepForNanoseconds(u64 DeltaTimeNS);
 
 #endif

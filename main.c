@@ -1,16 +1,10 @@
 #include "immintrin.h"
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <GL/glx.h>
-
-#include <time.h>
-
 #include "base.h"
 #include "string.h"
 #include "random.h"
+#include "platform.h"
 #include "glload.h"
-#include "window.h"
 #include "renderer.h"
 #include "automata.h"
 #include "menu.h"
@@ -21,7 +15,13 @@ static b32 ShouldClearScreen;
 
 static cell_type Creating = SAND;
 
-#include "window.c"
+#if defined(__linux__)
+#include "platform_linux.c"
+#elif defined(_WIN64)
+#include "platform_windows.c"
+#else
+#error `platform.h` is not implemented on this platform.
+#endif
 #include "renderer.c"
 #include "automata.c"
 #include "menu.c"
@@ -104,7 +104,7 @@ main(void)
 {
 	SeedRandom();
 
-	OpenWindow();
+	PlatformOpenWindow();
 	renderer_context RendererContext = {0};
 	InitializeRenderer(&RendererContext);
 
@@ -117,9 +117,9 @@ main(void)
 
 	while (Running)
 	{
-		CurrentTimestamp = GetTime();
+		CurrentTimestamp = PlatformGetTime();
 
-		HandleInput();
+		PlatformHandleInput();
 
 		{
 			BeginMenu();
@@ -157,7 +157,7 @@ main(void)
 				Playing ^= 1;
 			}
 
-			EndMenu();
+			FinishMenu();
 		}
 
 		// NOTE(ariel) Map new input in window coordinates to cell space.
@@ -250,10 +250,10 @@ main(void)
 
 		DeltaTime = CurrentTimestamp - PreviousTimestamp;
 		PreviousTimestamp = CurrentTimestamp;
-		SleepForNanoseconds(DeltaTime);
+		PlatformSleep(DeltaTime);
 	}
 
 	TerminateRenderer(RendererContext);
-	CloseWindow();
+	PlatformCloseWindow();
 	return 0;
 }

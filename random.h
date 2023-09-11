@@ -30,8 +30,10 @@ SeedRandom(void)
 static inline u32
 RotateRight(u32 Value, u32 Count)
 {
-#ifdef __clang__
+#if defined(__clang__)
 	u32 Result =	__builtin_rotateright32(Value, Count);
+#elif defined(__GNUC__)
+	u32 Result = _rotr(Value, Count);
 #else
 #error "Implement RotateRight() for this compiler."
 #endif
@@ -54,7 +56,7 @@ RandomU32(void)
 	// floor((32+5) / 2) = 18 is another arbitrary constant as far as I can tell
 	// necessary for non-zero xor output. Rotate bits to produce a full period,
 	// where again top 5 bits of 64 bits specify rotation, hence right shift 59.
-	u32 Rotate = PreviousState >> 59;
+	u32 Rotate = (u32)(PreviousState >> 59);
 	u32 Xorshift = (u32)(((PreviousState >> 18) ^ PreviousState) >> 27);
 	u32 Result = RotateRight(Xorshift, Rotate);
 

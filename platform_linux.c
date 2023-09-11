@@ -1,10 +1,21 @@
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+
+#include <time.h>
+
 typedef GLXContext (* glXCreateContextAttribsARBProc)(Display *, GLXFBConfig, GLXContext, b32, int *);
 typedef void (* glXSwapIntervalEXTProc)(Display *, GLXDrawable, int);
 typedef int (* glXSwapIntervalSGIProc)(int);
 typedef int (* glXSwapIntervalMESAProc)(unsigned int);
 
+static Display *X11Display;
+static GLXContext X11GLContext;
+static Window X11Window;
+static Cursor InvisibleCursor;
+static Atom X11DeleteWindowEvent;
+
 static void
-OpenWindow(void)
+PlatformOpenWindow(void)
 {
 	X11Display = XOpenDisplay(0);
 
@@ -108,7 +119,7 @@ OpenWindow(void)
 	// NOTE(ariel) Hide cursor by default.
 	{
 		XColor Color = {0};
-		Color.red = Color.red = Color.blue = 0;
+		Color.red = Color.green = Color.blue = 0;
 
 		Pixmap PixmapID = XCreatePixmap(X11Display, X11DefaultRootWindow, 1, 1, 1);
 		Assert(PixmapID);
@@ -116,15 +127,17 @@ OpenWindow(void)
 		InvisibleCursor = XCreatePixmapCursor(X11Display, PixmapID, PixmapID, &Color, &Color, 0, 0);
 		XFreePixmap(X11Display, PixmapID);
 
-		HideCursor();
+		PlatformHideCursor();
 	}
 
 	XFree(ViableFramebuffers);
 	XFlush(X11Display);
+
+	LoadOpenGLExtensions();
 }
 
 static void
-CloseWindow(void)
+PlatformCloseWindow(void)
 {
 	glXDestroyContext(X11Display, X11GLContext);
 	XDestroyWindow(X11Display, X11Window);
@@ -132,19 +145,25 @@ CloseWindow(void)
 }
 
 static void
-HideCursor(void)
+PlatformSwapBuffers(void)
+{
+	glXSwapBuffers(X11Display, X11Window);
+}
+
+static void
+PlatformHideCursor(void)
 {
 	XDefineCursor(X11Display, X11Window, InvisibleCursor);
 }
 
 static void
-ShowCursor(void)
+PlatformShowCursor(void)
 {
 	XUndefineCursor(X11Display, X11Window);
 }
 
 static void
-HandleInput(void)
+PlatformHandleInput(void)
 {
 	for (s32 Count = XPending(X11Display); Count > 0; Count -= 1)
 	{
@@ -207,5 +226,31 @@ HandleInput(void)
 				break;
 			}
 		}
+	}
+}
+
+static inline u64
+PlatformGetTime(void)
+{
+	u64 Nanoseconds = 0;
+	struct timespec Now = {0};
+	clock_gettime(CLOCK_MONOTONIC, &Now);
+	Nanoseconds += Now.tv_sec;
+	Nanoseconds *= NANOSECONDS_PER_SECOND;
+	Nanoseconds += Now.tv_nsec;
+	return Nanoseconds;
+}
+
+static inline void
+PlatformSleep(u64 DeltaTimeNS)
+{
+	static const u64 TARGET_FRAME_TIME_NS = NANOSECONDS_PER_SECOND / TARGET_FRAMES_PER_SECOND;
+	s64 SleepTimeNS = TARGET_FRAME_TIME_NS - DeltaTimeNS;
+	if (SleepTimeNS > 0)
+	{
+		struct timespec Time = {0};
+		Time.tv_sec = SleepTimeNS / NANOSECONDS_PER_SECOND;
+		Time.tv_nsec = SleepTimeNS % NANOSECONDS_PER_SECOND;
+		nanosleep(&Time, 0);
 	}
 }

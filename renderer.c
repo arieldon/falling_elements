@@ -31,8 +31,6 @@ OpenGLDebugMessageCallback(
 static void
 InitializeRenderer(renderer_context *Context)
 {
-	LoadOpenGLExtensions();
-
 	// NOTE(ariel) Set global state of OpenGL context.
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glDisable(GL_SCISSOR_TEST);
@@ -241,31 +239,5 @@ PresentBuffer(void)
 	glClear(GL_COLOR_BUFFER_BIT);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Quads[0]) * QuadsCount, Quads);
 	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, QuadsCount);
-	glXSwapBuffers(X11Display, X11Window);
-}
-
-static inline u64
-GetTime(void)
-{
-	u64 Nanoseconds = 0;
-	struct timespec Now = {0};
-	clock_gettime(CLOCK_MONOTONIC, &Now);
-	Nanoseconds += Now.tv_sec;
-	Nanoseconds *= NANOSECONDS_PER_SECOND;
-	Nanoseconds += Now.tv_nsec;
-	return Nanoseconds;
-}
-
-static inline void
-SleepForNanoseconds(u64 DeltaTimeNS)
-{
-	static const u64 TARGET_FRAME_TIME_NS = NANOSECONDS_PER_SECOND / TARGET_FRAMES_PER_SECOND;
-	s64 SleepTimeNS = TARGET_FRAME_TIME_NS - DeltaTimeNS;
-	if (SleepTimeNS > 0)
-	{
-		struct timespec Time = {0};
-		Time.tv_sec = SleepTimeNS / NANOSECONDS_PER_SECOND;
-		Time.tv_nsec = SleepTimeNS % NANOSECONDS_PER_SECOND;
-		nanosleep(&Time, 0);
-	}
+	PlatformSwapBuffers();
 }

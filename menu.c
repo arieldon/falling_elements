@@ -21,11 +21,11 @@ BeginMenu(void)
 	MenuContext.MenuIsHot = MouseOverTarget(MenuContext.EntireMenu);
 	if (MenuContext.MenuIsHot)
 	{
-		ShowCursor();
+		PlatformShowCursor();
 	}
 	else
 	{
-		HideCursor();
+		PlatformHideCursor();
 	}
 
 	MenuContext.OffsetX = MenuContext.StartOffsetX = WINDOW_WIDTH - ICON_SIZE*MenuContext.MenuIsHot;
@@ -37,7 +37,7 @@ BeginMenu(void)
 }
 
 static void
-EndMenu(void)
+FinishMenu(void)
 {
 	// NOTE(ariel) Don't draw until after first frame because menu isn't centered
 	// properly yet.

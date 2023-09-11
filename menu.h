@@ -43,8 +43,8 @@ struct menu_context
 
 static menu_context MenuContext;
 
-static void MenuBegin(void);
-static void MenuEnd(void);
+static void BeginMenu(void);
+static void FinishMenu(void);
 
 #define MenuButton(Icon, IconColor) MenuButtonID(__LINE__, Icon, IconColor)
 

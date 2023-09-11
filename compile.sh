@@ -3,11 +3,18 @@
 set -eux
 
 BIN="falling_elements"
-COMPILER="clang"
 
+COMPILER="clang"
+LIBRARIES="-lX11 -lGL"
 CFLAGS="-std=c11 -march=native -D_DEFAULT_SOURCE"
 WARNINGS="-Wall -Wextra -Wshadow -Wconversion -Wdouble-promotion -Wno-unused-function -Wno-sign-conversion -Wno-string-conversion"
-LIBRARIES="-lX11 -lGL"
+
+if [ $# -ge 1 ] && [ "$1" = "--windows" ]; then
+	COMPILER="x86_64-w64-mingw32-gcc"
+	LIBRARIES="-lgdi32 -lopengl32"
+	shift 1
+fi
+
 FLAGS="$CFLAGS $WARNINGS $LIBRARIES"
 
 if [ $# -ge 1 ] && [ "$1" = "--release" ]; then
@@ -15,7 +22,7 @@ if [ $# -ge 1 ] && [ "$1" = "--release" ]; then
 	FLAGS="$FLAGS $RELEASE"
 	shift 1
 else
-	DEBUG="-DDEBUG -g3 -O0 -fno-omit-frame-pointer -fsanitize=undefined -fsanitize-trap -fsanitize-undefined-trap-on-error"
+	DEBUG="-DDEBUG -g3 -O0 -fno-omit-frame-pointer -fsanitize=undefined -fsanitize-undefined-trap-on-error"
 	FLAGS="$FLAGS $DEBUG"
 fi
 
