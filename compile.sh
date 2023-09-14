@@ -12,6 +12,7 @@ WARNINGS="-Wall -Wextra -Wshadow -Wconversion -Wdouble-promotion -Wno-unused-fun
 if [ $# -ge 1 ] && [ "$1" = "--windows" ]; then
 	COMPILER="x86_64-w64-mingw32-gcc"
 	LIBRARIES="-lgdi32 -lopengl32"
+	WARNINGS="$WARNINGS -Wno-parentheses"
 	shift 1
 fi
 
