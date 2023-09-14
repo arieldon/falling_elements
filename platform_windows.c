@@ -44,12 +44,9 @@ WindowProcedure(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
 			TrackMouseEventParameter.dwHoverTime = HOVER_DEFAULT;
 			TrackMouseEvent(&TrackMouseEventParameter);
 
-			// FIXME(ariel) In Windows, the coordinates along the y-axis seem to be
-			// offset for some reason. The addition below adjusts for this to match
-			// coordinates between Linux and Windows.
 			Input.CursorIsInWindow = true;
 			Input.MousePositionX = (s16)(lParam >> 0x00);
-			Input.MousePositionY = (s16)(lParam >> 0x10) + 24;
+			Input.MousePositionY = (s16)(lParam >> 0x10);
 			break;
 		}
 		case WM_MOUSELEAVE:
@@ -57,7 +54,6 @@ WindowProcedure(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
 			Input.CursorIsInWindow = false;
 			break;
 		}
-		// TODO(ariel) What's the diffrence between `WM_CLOSE` and `WM_DESTROY`?
 		case WM_CLOSE:
 		case WM_DESTROY:
 		case WM_QUIT:
@@ -97,8 +93,23 @@ PlatformOpenWindow(void)
 		ATOM Atom = RegisterClassA(&WindowClass);
 		AssertAlways(Atom);
 
-		s32 X = CW_USEDEFAULT;
-		s32 Y = CW_USEDEFAULT;
+		// NOTE(ariel) `WINDOW_WIDTH` and `WINDOW_HEIGHT` for the sake of the Win32
+		// API specify client area -- the drawable portion of the window. However,
+		// CreateWindowExA() also includes non-client area (in this case title bar
+		// and borders) within its dimensions, so it's necessary to add padding in
+		// order to get the area desired for drawing.
+		RECT WindowDimensions = {0};
+		WindowDimensions.right = WINDOW_WIDTH;
+		WindowDimensions.bottom = WINDOW_HEIGHT;
+		AdjustWindowRect(&WindowDimensions, WS_OVERLAPPEDWINDOW, FALSE);
+		s32 AdjustedWidth = WindowDimensions.right - WindowDimensions.left;
+		s32 AdjustedHeight = WindowDimensions.bottom - WindowDimensions.top;
+
+		s32 ScreenWidth = GetSystemMetrics(SM_CXSCREEN);
+		s32 ScreenHeight = GetSystemMetrics(SM_CYSCREEN);
+		s32 X = (ScreenWidth - AdjustedWidth) / 2;
+		s32 Y = (ScreenHeight - AdjustedHeight) / 2;
+
 		s32 ExtendedWindowStyle = 0;
 		s32 Style = WS_VISIBLE;
 
@@ -109,7 +120,7 @@ PlatformOpenWindow(void)
 		Win32Window = CreateWindowExA(
 			ExtendedWindowStyle,
 			ClassName, WindowName,
-			Style, X, Y, WINDOW_WIDTH, WINDOW_HEIGHT,
+			Style, X, Y, AdjustedWidth, AdjustedHeight,
 			WindowParent, Menu, Instance, lpParam);
 		AssertAlways(Win32Window);
 
@@ -126,7 +137,7 @@ PlatformOpenWindow(void)
 		PixelFormatDescriptor.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
 		PixelFormatDescriptor.iPixelType = PFD_TYPE_RGBA;
 		PixelFormatDescriptor.cColorBits = 32;
-		PixelFormatDescriptor.cDepthBits = 32; // FIXME(ariel) Switch to 24-bit depth buffer?
+		PixelFormatDescriptor.cDepthBits = 24;
 		PixelFormatDescriptor.dwLayerMask = PFD_MAIN_PLANE;
 
 		s32 PixelFormat = ChoosePixelFormat(Win32DeviceContext, &PixelFormatDescriptor);
