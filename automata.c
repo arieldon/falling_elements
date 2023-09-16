@@ -30,7 +30,7 @@ AddSpeedSaturated(s16 Speed)
 static inline s32
 ClampSpeedToBounds(s32 X, s32 Y, s32 Speed)
 {
-	s32 Bound = 1 + Min(Min(X, X_CELL_COUNT-X), Min(Y, Y_CELL_COUNT-Y));
+	s32 Bound = Min(Min(X, X_CELL_COUNT-X), Min(Y, Y_CELL_COUNT-Y));
 	s32 Result = Min(Speed, Bound);
 	return Result;
 }
