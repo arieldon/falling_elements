@@ -1,7 +1,6 @@
 #include "immintrin.h"
 
 #include "base.h"
-#include "string.h"
 #include "random.h"
 #include "platform.h"
 #include "glload.h"
